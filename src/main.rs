@@ -36,13 +36,6 @@ fn main() {
           argument: Box::new(Expression::Hole {
             name: format!("ata"),
           }),
-          // argument: Box::new(Expression::BinaryOp {
-          //   op: ast::Operation::Sub,
-          //   lhs: Box::new(Expression::Variable { name: format!("n") }),
-          //   rhs: Box::new(Expression::Literal {
-          //     literal: Literal::Number { value: 1 },
-          //   }),
-          // }),
         }),
         otherwise: Box::new(Expression::Literal {
           literal: Literal::Boolean { value: true },

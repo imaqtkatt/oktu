@@ -35,10 +35,10 @@ pub enum Expression {
     then: Box<Expression>,
     otherwise: Box<Expression>,
   },
-  /// match x {
-  /// .variant1 => body,
-  /// .variant2 => body,
-  /// }
+  /// match x with
+  ///   pat => body,
+  ///   pat => body,
+  /// end
   Match {
     scrutinee: Box<Expression>,
     arms: Vec<Arm>,

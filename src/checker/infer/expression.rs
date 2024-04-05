@@ -182,7 +182,7 @@ impl Infer for Expression {
           Type::new(TypeKind::Enum { name: name.clone() }),
         ),
         None => (
-          elab::Expression::error(format!("Unknow variant '{variant}'.")),
+          elab::Expression::error(format!("Unknown variant '{variant}'.")),
           Type::new(TypeKind::Error),
         ),
       },

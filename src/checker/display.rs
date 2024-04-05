@@ -29,3 +29,16 @@ impl fmt::Display for TypeKind {
     }
   }
 }
+
+impl TypeKind {
+  fn need_parens(&self) -> bool {
+    match self {
+      Self::Arrow { .. } => true,
+      Self::Hole { hole } => match hole.get() {
+        HoleKind::Bound { t } => t.need_parens(),
+        HoleKind::Unbound { .. } => false,
+      },
+      _ => false,
+    }
+  }
+}

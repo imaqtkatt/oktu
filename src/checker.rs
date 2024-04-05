@@ -103,7 +103,6 @@ impl Infer for Program {
 
   fn infer(self, mut env: Env) -> (Self::Out, Type) {
     let mut declarations = Vec::with_capacity(self.declarations.len());
-    // let mut last = None;
 
     for decl in self.declarations {
       let ((new_env, elab_decl), _) = decl.infer(env);
@@ -118,18 +117,5 @@ impl Infer for Program {
       },
       TypeKind::boolean(),
     )
-  }
-}
-
-impl TypeKind {
-  fn need_parens(&self) -> bool {
-    match self {
-      Self::Arrow { .. } => true,
-      Self::Hole { hole } => match hole.get() {
-        HoleKind::Bound { t } => t.need_parens(),
-        HoleKind::Unbound { .. } => false,
-      },
-      _ => false,
-    }
   }
 }
