@@ -50,7 +50,7 @@ pub enum Expression {
     rhs: Box<Expression>,
   },
   /// .variant
-  Enum { variant: String },
+  Variant { variant: String },
 }
 
 #[derive(Clone, Debug)]

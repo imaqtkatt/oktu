@@ -61,7 +61,7 @@ pub enum Expression {
     rhs: Box<Expression>,
   },
   /// .variant
-  Enum {
+  Variant {
     variant: String,
   },
 }

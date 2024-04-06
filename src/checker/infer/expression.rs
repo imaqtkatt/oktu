@@ -176,9 +176,9 @@ impl Infer for Expression {
           ret_type,
         )
       }
-      Expression::Enum { variant } => match env.variant_to_enum.get(&variant) {
+      Expression::Variant { variant } => match env.variant_to_enum.get(&variant) {
         Some(name) => (
-          elab::Expression::Enum { variant },
+          elab::Expression::Variant { variant },
           Type::new(TypeKind::Enum { name: name.clone() }),
         ),
         None => (

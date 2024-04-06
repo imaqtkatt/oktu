@@ -1,6 +1,7 @@
 use std::{fs, io::Write};
 
 use ast::{Arm, Literal, Pattern};
+use lexer::Lexer;
 
 use crate::{
   ast::{Expression, Function, TopLevel},
@@ -10,6 +11,8 @@ use crate::{
 pub mod ast;
 pub mod checker;
 pub mod elab;
+pub mod lexer;
+pub mod parser;
 
 fn main() {
   let decls = vec![

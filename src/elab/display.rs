@@ -1,6 +1,6 @@
 use core::fmt;
 
-use super::{Arm, Enum, Expression, Function, Literal, Operation, Pattern, TopLevel};
+use super::{Arm, Enum, Expression, Function, Literal, Operation, Pattern, Program, TopLevel};
 
 impl fmt::Display for Literal {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -72,7 +72,7 @@ impl fmt::Display for Expression {
         Ok(())
       }
       Expression::BinaryOp { op, lhs, rhs } => write!(f, "({lhs} {op} {rhs})"),
-      Expression::Enum { variant } => write!(f, ".{variant}"),
+      Expression::Variant { variant } => write!(f, ".{variant}"),
     }
   }
 }
@@ -107,5 +107,16 @@ impl fmt::Display for TopLevel {
       TopLevel::Function(function) => write!(f, "{function}"),
       TopLevel::Enum(r#enum) => write!(f, "{}", r#enum),
     }
+  }
+}
+
+impl fmt::Display for Program {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "// {}\n\n", self.file_name)?;
+    for decl in self.declarations.iter() {
+      write!(f, "{}\n\n", decl)?;
+    }
+
+    Ok(())
   }
 }
