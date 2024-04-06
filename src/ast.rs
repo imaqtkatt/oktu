@@ -81,11 +81,13 @@ pub enum Pattern {
   Literal { literal: Literal },
 }
 
+pub type Parameters = Vec<String>;
+
 #[derive(Clone, Debug)]
 pub struct Function {
   pub name: String,
   pub rec: bool,
-  pub parameters: Vec<String>,
+  pub parameters: Parameters,
   pub body: Expression,
 }
 
@@ -105,4 +107,13 @@ pub enum TopLevel {
 pub struct Program {
   pub file_name: String,
   pub declarations: Vec<TopLevel>,
+}
+
+impl Program {
+  pub fn empty() -> Self {
+    Self {
+      file_name: String::new(),
+      declarations: Vec::new(),
+    }
+  }
 }

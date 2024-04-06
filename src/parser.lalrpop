@@ -1,0 +1,156 @@
+use crate::ast::{
+  Expression, Literal, Operation, Pattern, Arm, Function, Enum, TopLevel, Program, Parameters
+};
+
+grammar;
+
+match {
+  r"[0-9]+"
+} else {
+  r"[a-zA-Z_]+",
+  _
+}
+
+Comma<T>: Vec<T> = {
+  <mut v:(<T> ",")*> <e:T?> => match e {
+    None => v,
+    Some(e) => {
+      v.push(e);
+      v
+    }
+  }
+};
+
+pub Program: Program = {
+  => Program::empty(),
+  <mut program:Program> <decl:TopLevel> => {
+    program.declarations.push(decl);
+    program
+  }
+};
+
+pub TopLevel: TopLevel = {
+  <Enum> => TopLevel::Enum(<>),
+  <Function> => TopLevel::Function(<>),
+};
+
+Enum: Enum = "enum" <name:Ident> ":=" <variants:Comma<VariantStr>> =>
+  Enum {
+    name: String::from(name),
+    variants: variants.into_iter().map(String::from).collect(),
+  };
+
+Parameters: Parameters = {
+  => Vec::new(),
+  <mut params:Parameters> <param:Ident> => {
+    params.push(String::from(param));
+    params
+  }
+}
+
+Function: Function = {
+  "let" "rec" <name:Ident> <parameters:Parameters> ":=" <body:Expression> =>
+    Function {
+      name: String::from(name),
+      rec: true,
+      parameters,
+      body,
+    },
+  "let" <name:Ident> <parameters:Parameters> ":=" <body:Expression> =>
+    Function {
+      name: String::from(name),
+      rec: false,
+      parameters,
+      body,
+    },
+}
+
+pub Pattern: Pattern = {
+  <Literal> => Pattern::Literal { literal: <> },
+  <VariantStr> => Pattern::Enum { name: String::from(<>) },
+  <Ident> => Pattern::Variable { name: String::from(<>) },
+}
+
+Arm: Arm = <left:Pattern> "=>" <right:Expression> => Arm { left, right };
+
+Arms = Comma<Arm>;
+
+pub Expression: Expression = {
+  <Infix>,
+  <Fun>,
+  <Let>,
+  <If>,
+  <Match>,
+};
+
+#[inline]
+Fun: Expression = "fun" <variable:Ident> "->" <body:Expression> =>
+  Expression::Fun { variable: String::from(variable), body: Box::new(body) };
+
+#[inline]
+Let: Expression = "let" <bind:Ident> "=" <value:Expression> "in" <next:Expression> =>
+  Expression::Let { bind: String::from(bind), value: Box::new(value), next: Box::new(next) };
+
+#[inline]
+Match: Expression = "match" <scrutinee:Expression> "with" <arms:Arms> "end" =>
+  Expression::Match { scrutinee: Box::new(scrutinee), arms };
+
+#[inline]
+If: Expression = "if" <condition:Expression> "then" <then:Expression> "else" <otherwise:Expression> =>
+  Expression::If { condition: Box::new(condition), then: Box::new(then), otherwise: Box::new(otherwise) };
+
+Infix: Expression = {
+  #[precedence(level="0")]
+  <Application>,
+
+  #[precedence(level="1")] #[assoc(side="left")]
+  <lhs:Infix> "*" <rhs:Infix> =>
+    Expression::BinaryOp { op: Operation::Mul, lhs: Box::new(lhs), rhs: Box::new(rhs) },
+
+  #[precedence(level="1")] #[assoc(side="left")]
+  <lhs:Infix> "/" <rhs:Infix> =>
+    Expression::BinaryOp { op: Operation::Mul, lhs: Box::new(lhs), rhs: Box::new(rhs) },
+
+  #[precedence(level="2")] #[assoc(side="left")]
+  <lhs:Infix> "-" <rhs:Infix> =>
+    Expression::BinaryOp { op: Operation::Sub, lhs: Box::new(lhs), rhs: Box::new(rhs) },
+
+  #[precedence(level="2")] #[assoc(side="left")]
+  <lhs:Infix> "+" <rhs:Infix> =>
+    Expression::BinaryOp { op: Operation::Sub, lhs: Box::new(lhs), rhs: Box::new(rhs) },
+
+  #[precedence(level="3")] #[assoc(side="left")]
+  <lhs:Infix> ">" <rhs:Infix> =>
+    Expression::BinaryOp { op: Operation::Gt, lhs: Box::new(lhs), rhs: Box::new(rhs) },
+}
+
+Application: Expression = {
+  <SubExpression>,
+  <function:Application> <argument:SubExpression> =>
+    Expression::Application { function: Box::new(function), argument: Box::new(argument) },
+}
+
+pub SubExpression: Expression = {
+  <Primary>,
+  "(" <Expression> ")",
+};
+
+pub Primary: Expression = {
+  <Literal> => Expression::Literal { literal: <> },
+  <Variant>,
+  <Hole>,
+  <Variable>,
+};
+
+pub Literal: Literal = {
+  "true" => Literal::Boolean { value: true },
+  "false" => Literal::Boolean { value: false },
+  <r"[0-9]+"> => Literal::Number { value: i32::from_str_radix(<>, 10).unwrap() },
+};
+
+pub Variant: Expression = <VariantStr> => Expression::Variant { variant: String::from(<>) };
+pub Hole: Expression = "?" <Ident> => Expression::Hole { name: String::from(<>) };
+pub Variable: Expression = <Ident> => Expression::Variable { name: String::from(<>) };
+
+pub VariantStr: &'input str = "." <s:r"[a-zA-Z_]+"> => s;
+pub Ident: &'input str = <s:r"[a-zA-Z_]+"> => s;

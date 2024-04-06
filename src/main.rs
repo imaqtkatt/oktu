@@ -1,122 +1,37 @@
-use std::{fs, io::Write};
+use lalrpop_util::lalrpop_mod;
 
-use ast::{Arm, Literal, Pattern};
-use lexer::Lexer;
-
-use crate::{
-  ast::{Expression, Function, TopLevel},
-  checker::{infer::Infer, Env},
-};
+use crate::checker::{infer::Infer, Env};
 
 pub mod ast;
 pub mod checker;
 pub mod elab;
-pub mod lexer;
-pub mod parser;
+lalrpop_mod!(pub parser);
 
 fn main() {
-  let decls = vec![
-    TopLevel::Enum(ast::Enum {
-      name: format!("bool_enum"),
-      variants: vec![format!("true"), format!("false")],
-    }),
-    TopLevel::Function(Function {
-      name: format!("up_to_zero"),
-      rec: true,
-      parameters: vec![format!("n")],
-      body: Expression::If {
-        condition: Box::new(Expression::BinaryOp {
-          op: ast::Operation::Gt,
-          lhs: Box::new(Expression::Variable { name: format!("n") }),
-          rhs: Box::new(Expression::Literal {
-            literal: Literal::Number { value: 0 },
-          }),
-        }),
-        then: Box::new(Expression::Application {
-          function: Box::new(Expression::Variable {
-            name: format!("up_to_zero"),
-          }),
-          argument: Box::new(Expression::Hole {
-            name: format!("ata"),
-          }),
-        }),
-        otherwise: Box::new(Expression::Literal {
-          literal: Literal::Boolean { value: true },
-        }),
-      },
-    }),
-    TopLevel::Function(Function {
-      name: format!("first"),
-      rec: false,
-      parameters: vec![format!("x"), format!("y")],
-      body: Expression::Variable { name: format!("x") },
-    }),
-    TopLevel::Function(Function {
-      name: format!("main"),
-      rec: false,
-      parameters: vec![],
-      body: Expression::Application {
-        function: Box::new(Expression::Variable {
-          name: format!("first"),
-        }),
-        argument: Box::new(Expression::Literal {
-          literal: Literal::Number { value: 42 },
-        }),
-      },
-    }),
-    TopLevel::Function(Function {
-      name: format!("main2"),
-      rec: false,
-      parameters: vec![format!("x")],
-      body: Expression::Match {
-        scrutinee: Box::new(Expression::Variable { name: format!("x") }),
-        arms: vec![
-          Arm {
-            left: Pattern::Enum {
-              name: format!("true"),
-            },
-            right: Expression::Literal {
-              literal: Literal::Number { value: 42 },
-            },
-          },
-          Arm {
-            left: Pattern::Enum {
-              name: format!("false"),
-            },
-            right: Expression::BinaryOp {
-              op: ast::Operation::Add,
-              lhs: Box::new(Expression::Literal {
-                literal: Literal::Number { value: 2 },
-              }),
-              rhs: Box::new(Expression::Literal {
-                literal: Literal::Number { value: 3 },
-              }),
-            },
-          },
-        ],
-      },
-    }),
-  ];
+  let tl_parser = parser::ProgramParser::new();
 
-  let mut out_infers = fs::File::options()
-    .create(true)
-    .write(true)
-    .truncate(true)
-    .open("out.toktu")
-    .unwrap();
+  let program = r#"
+    enum bool_enum :=
+      .True,
+      .False,
 
-  let mut env = Env::default();
-  for decl in decls {
-    let ((new_env, elab_decl), decl_type) = decl.infer(env.clone());
-    env = new_env;
-    println!("{elab_decl} :- {decl_type}");
-    match elab_decl {
-      elab::TopLevel::Function(function) => {
-        _ = out_infers
-          .write(format!("{} :- {}\n\n", function.name, decl_type).as_bytes())
-          .unwrap()
-      }
-      elab::TopLevel::Enum(_) => {}
+    let rec up_to_zero n :=
+      if n > 0
+        then up_to_zero ?ata
+        else true
+
+    let first x y := x
+
+    let main _ :=
+      first 42
+  "#;
+
+  match tl_parser.parse(program) {
+    Ok(program) => {
+      let env = Env::default();
+      let (elab_prog, _) = program.infer(env);
+      println!("{elab_prog}");
     }
+    Err(e) => eprintln!("{e}"),
   }
 }

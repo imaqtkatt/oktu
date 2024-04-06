@@ -44,7 +44,7 @@ impl fmt::Display for Pattern {
 
 impl fmt::Display for Arm {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{} => {} ", self.left, self.right)
+    write!(f, "{} => {}", self.left, self.right)
   }
 }
 
@@ -66,7 +66,7 @@ impl fmt::Display for Expression {
       Expression::Match { scrutinee, arms } => {
         write!(f, "match {scrutinee} with ")?;
         for arm in arms {
-          write!(f, "{arm}")?;
+          write!(f, "{arm}, ")?;
         }
         write!(f, "end")?;
         Ok(())
