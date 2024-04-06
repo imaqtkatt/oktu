@@ -12,43 +12,22 @@ pub enum Expression {
   /// a..z | _
   Variable { name: String },
   /// fun var -> body
-  Fun {
-    variable: String,
-    body: Box<Expression>,
-  },
+  Fun { variable: String, body: Box<Expression> },
   /// f x
-  Application {
-    function: Box<Expression>,
-    argument: Box<Expression>,
-  },
+  Application { function: Box<Expression>, argument: Box<Expression> },
   /// num | str | bool
   Literal { literal: Literal },
   /// let bind = value in next
-  Let {
-    bind: String,
-    value: Box<Expression>,
-    next: Box<Expression>,
-  },
+  Let { bind: String, value: Box<Expression>, next: Box<Expression> },
   /// if condition then expr else expr
-  If {
-    condition: Box<Expression>,
-    then: Box<Expression>,
-    otherwise: Box<Expression>,
-  },
+  If { condition: Box<Expression>, then: Box<Expression>, otherwise: Box<Expression> },
   /// match x with
   ///   pat => body,
   ///   pat => body,
   /// end
-  Match {
-    scrutinee: Box<Expression>,
-    arms: Vec<Arm>,
-  },
+  Match { scrutinee: Box<Expression>, arms: Vec<Arm> },
   /// lhs op rhs
-  BinaryOp {
-    op: Operation,
-    lhs: Box<Expression>,
-    rhs: Box<Expression>,
-  },
+  BinaryOp { op: Operation, lhs: Box<Expression>, rhs: Box<Expression> },
   /// .variant
   Variant { variant: String },
 }
@@ -77,7 +56,7 @@ pub struct Arm {
 #[derive(Clone, Debug)]
 pub enum Pattern {
   Variable { name: String },
-  Enum { name: String },
+  Variant { variant: String },
   Literal { literal: Literal },
 }
 
@@ -94,6 +73,7 @@ pub struct Function {
 #[derive(Clone, Debug)]
 pub struct Enum {
   pub name: String,
+  pub parameters: Vec<String>,
   pub variants: Vec<String>,
 }
 
@@ -105,15 +85,12 @@ pub enum TopLevel {
 
 #[derive(Clone, Debug)]
 pub struct Program {
-  pub file_name: String,
+  pub file_name: Option<Box<str>>,
   pub declarations: Vec<TopLevel>,
 }
 
 impl Program {
   pub fn empty() -> Self {
-    Self {
-      file_name: String::new(),
-      declarations: Vec::new(),
-    }
+    Self { file_name: None, declarations: Vec::new() }
   }
 }

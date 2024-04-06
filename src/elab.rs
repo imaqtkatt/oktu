@@ -98,7 +98,7 @@ pub enum Pattern {
   Error { message: String },
   Wildcard,
   Variable { name: String },
-  Enum { name: String },
+  Variant { variant: String },
   Literal { literal: Literal },
 }
 
@@ -129,6 +129,6 @@ pub enum TopLevel {
 
 #[derive(Clone, Debug)]
 pub struct Program {
-  pub file_name: String,
+  pub file_name: Option<Box<str>>,
   pub declarations: Vec<TopLevel>,
 }

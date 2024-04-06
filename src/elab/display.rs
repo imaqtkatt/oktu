@@ -36,7 +36,7 @@ impl fmt::Display for Pattern {
       Pattern::Error { message } => write!(f, "<Error: \"{message}\">"),
       Pattern::Wildcard => write!(f, "_"),
       Pattern::Variable { name } => write!(f, "{name}"),
-      Pattern::Enum { name } => write!(f, ".{name}"),
+      Pattern::Variant { variant: name } => write!(f, ".{name}"),
       Pattern::Literal { literal } => write!(f, "{literal}"),
     }
   }
@@ -58,11 +58,9 @@ impl fmt::Display for Expression {
       Expression::Application { function, argument } => write!(f, "({function} {argument})"),
       Expression::Literal { literal } => write!(f, "{literal}"),
       Expression::Let { bind, value, next } => write!(f, "let {bind} = {value} in {next}"),
-      Expression::If {
-        condition,
-        then,
-        otherwise,
-      } => write!(f, "if {condition} then {then} else {otherwise}"),
+      Expression::If { condition, then, otherwise } => {
+        write!(f, "if {condition} then {then} else {otherwise}")
+      }
       Expression::Match { scrutinee, arms } => {
         write!(f, "match {scrutinee} with ")?;
         for arm in arms {
@@ -112,7 +110,9 @@ impl fmt::Display for TopLevel {
 
 impl fmt::Display for Program {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "// {}\n\n", self.file_name)?;
+    if let Some(file_name) = &self.file_name {
+      write!(f, "// {}\n\n", file_name)?;
+    }
     for decl in self.declarations.iter() {
       write!(f, "{}\n\n", decl)?;
     }

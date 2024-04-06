@@ -22,11 +22,7 @@ pub struct Env {
 
 impl Env {
   pub fn instantiate(&mut self, scheme: Scheme) -> Type {
-    let substitutions = scheme
-      .binds
-      .iter()
-      .map(|_| self.new_hole())
-      .collect::<Vec<_>>();
+    let substitutions = scheme.binds.iter().map(|_| self.new_hole()).collect::<Vec<_>>();
 
     scheme.t.instantiate(&substitutions)
   }
@@ -38,16 +34,12 @@ impl Env {
 
   pub fn new_hole(&mut self) -> Type {
     let level = self.level;
-    Type::new(TypeKind::Hole {
-      hole: Hole::new(self.new_name(), level),
-    })
+    Type::new(TypeKind::Hole { hole: Hole::new(self.new_name(), level) })
   }
 
   pub fn new_hole_named(&mut self, name: String) -> Type {
     let level = self.level;
-    Type::new(TypeKind::Hole {
-      hole: Hole::new(name, level),
-    })
+    Type::new(TypeKind::Hole { hole: Hole::new(name, level) })
   }
 
   pub fn enter_level(&mut self) {
@@ -66,10 +58,7 @@ impl Env {
       match &*t {
         TypeKind::Hole { hole } => match hole.get() {
           HoleKind::Bound { t } => gen(t, level, counter),
-          HoleKind::Unbound {
-            name: _,
-            level: hole_level,
-          } => {
+          HoleKind::Unbound { name: _, level: hole_level } => {
             if hole_level > level {
               let current_level = *counter;
               *counter += 1;
@@ -110,12 +99,6 @@ impl Infer for Program {
       declarations.push(elab_decl);
     }
 
-    (
-      elab::Program {
-        file_name: self.file_name,
-        declarations,
-      },
-      TypeKind::boolean(),
-    )
+    (elab::Program { file_name: self.file_name, declarations }, TypeKind::boolean())
   }
 }

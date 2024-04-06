@@ -37,26 +37,27 @@ pub TopLevel: TopLevel = {
 Enum: Enum = "enum" <name:Ident> ":=" <variants:Comma<VariantStr>> =>
   Enum {
     name: String::from(name),
+    parameters: Vec::new(),
     variants: variants.into_iter().map(String::from).collect(),
   };
 
-Parameters: Parameters = {
+FunctionParameters: Parameters = {
   => Vec::new(),
-  <mut params:Parameters> <param:Ident> => {
+  <mut params:FunctionParameters> <param:Ident> => {
     params.push(String::from(param));
     params
   }
 }
 
 Function: Function = {
-  "let" "rec" <name:Ident> <parameters:Parameters> ":=" <body:Expression> =>
+  "let" "rec" <name:Ident> <parameters:FunctionParameters> ":=" <body:Expression> =>
     Function {
       name: String::from(name),
       rec: true,
       parameters,
       body,
     },
-  "let" <name:Ident> <parameters:Parameters> ":=" <body:Expression> =>
+  "let" <name:Ident> <parameters:FunctionParameters> ":=" <body:Expression> =>
     Function {
       name: String::from(name),
       rec: false,
@@ -67,7 +68,7 @@ Function: Function = {
 
 pub Pattern: Pattern = {
   <Literal> => Pattern::Literal { literal: <> },
-  <VariantStr> => Pattern::Enum { name: String::from(<>) },
+  <VariantStr> => Pattern::Variant { variant: String::from(<>) },
   <Ident> => Pattern::Variable { name: String::from(<>) },
 }
 
@@ -146,7 +147,7 @@ pub Literal: Literal = {
   "true" => Literal::Boolean { value: true },
   "false" => Literal::Boolean { value: false },
   <StringLiteral> => Literal::String { value: <> },
-  <r"[0-9]+"> => Literal::Number { value: i32::from_str_radix(<>, 10).unwrap() },
+  <r"[0-9]+"> => Literal::Number { value: <>.parse::<i32>().unwrap() },
 };
 
 pub Variant: Expression = <VariantStr> => Expression::Variant { variant: String::from(<>) };

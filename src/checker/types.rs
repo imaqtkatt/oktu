@@ -93,30 +93,21 @@ impl TypeKind {
   pub fn num_num() -> Type {
     Type::new(TypeKind::Arrow {
       t1: TypeKind::number(),
-      t2: Type::new(TypeKind::Arrow {
-        t1: TypeKind::number(),
-        t2: TypeKind::number(),
-      }),
+      t2: Type::new(TypeKind::Arrow { t1: TypeKind::number(), t2: TypeKind::number() }),
     })
   }
 
   pub fn num_logical() -> Type {
     Type::new(TypeKind::Arrow {
       t1: TypeKind::number(),
-      t2: Type::new(TypeKind::Arrow {
-        t1: TypeKind::number(),
-        t2: TypeKind::boolean(),
-      }),
+      t2: Type::new(TypeKind::Arrow { t1: TypeKind::number(), t2: TypeKind::boolean() }),
     })
   }
 
   pub fn str_str() -> Type {
     Type::new(TypeKind::Arrow {
       t1: TypeKind::string(),
-      t2: Type::new(TypeKind::Arrow {
-        t1: TypeKind::string(),
-        t2: TypeKind::string(),
-      }),
+      t2: Type::new(TypeKind::Arrow { t1: TypeKind::string(), t2: TypeKind::string() }),
     })
   }
 }
