@@ -145,12 +145,15 @@ pub Primary: Expression = {
 pub Literal: Literal = {
   "true" => Literal::Boolean { value: true },
   "false" => Literal::Boolean { value: false },
+  <StringLiteral> => Literal::String { value: <> },
   <r"[0-9]+"> => Literal::Number { value: i32::from_str_radix(<>, 10).unwrap() },
 };
 
 pub Variant: Expression = <VariantStr> => Expression::Variant { variant: String::from(<>) };
 pub Hole: Expression = "?" <Ident> => Expression::Hole { name: String::from(<>) };
 pub Variable: Expression = <Ident> => Expression::Variable { name: String::from(<>) };
+
+StringLiteral: String = r#""([^"\\]|\\.)*""# => String::from(<>.trim_matches('"'));
 
 pub VariantStr: &'input str = "." <s:r"[a-zA-Z_]+"> => s;
 pub Ident: &'input str = <s:r"[a-zA-Z_]+"> => s;

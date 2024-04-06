@@ -17,13 +17,13 @@ fn main() {
 
     let rec up_to_zero n :=
       if n > 0
-        then up_to_zero ?ata
+        then up_to_zero (n - 1)
         else true
 
     let first x y := x
 
     let main _ :=
-      first 42
+      first "hello"
   "#;
 
   match tl_parser.parse(program) {
