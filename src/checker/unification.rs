@@ -13,6 +13,7 @@ fn occurs(hole: Hole, t: Type) -> bool {
     TypeKind::Hole { hole: this_hole } => this_hole.clone() == hole,
     TypeKind::Arrow { t1, t2 } => occurs(hole.clone(), t1.clone()) || occurs(hole, t2.clone()),
     TypeKind::Enum { .. } => false,
+    TypeKind::Tuple { elements } => elements.iter().any(|e| occurs(hole.clone(), e.clone())),
     TypeKind::Number => false,
     TypeKind::String => false,
     TypeKind::Boolean => false,
@@ -24,16 +25,27 @@ pub fn unify(env: &Env, t1: Type, t2: Type) -> bool {
   use TypeKind::*;
   match (&*t1, &*t2) {
     (Variable { name: x }, Variable { name: y }) => x == y,
+
     (Generalized { id: x }, Generalized { id: y }) => x == y,
+
     (Hole { hole }, _) => unify_hole(env, hole.clone(), t2.clone(), false),
     (_, Hole { hole }) => unify_hole(env, hole.clone(), t1.clone(), true),
+
     (Arrow { t1: a, t2: b }, Arrow { t1: c, t2: d }) => {
       unify(env, a.clone(), c.clone()) && unify(env, b.clone(), d.clone())
     }
+
     (Enum { name: x }, Enum { name: y }) => x == y,
+
     (Number, Number) => true,
     (String, String) => true,
     (Boolean, Boolean) => true,
+
+    (Tuple { elements: x }, Tuple { elements: y }) if x.len() != y.len() => false,
+    (Tuple { elements: x }, Tuple { elements: y }) => {
+      x.iter().zip(y.iter()).all(|(a, b)| unify(env, a.clone(), b.clone()))
+    }
+
     (_, _) => {
       env.reporter.report(UnifyError(t1, t2));
       false

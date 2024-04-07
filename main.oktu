@@ -17,4 +17,11 @@ let pair fst snd := fun pair -> pair fst snd
 
 let first x y := x
 
-let main _ := first "hello"
+let main _ :=
+  let a = (1, 2) in
+  let res =
+    match a with
+      (x, y) => x + y
+    end
+  in
+  first "hello"

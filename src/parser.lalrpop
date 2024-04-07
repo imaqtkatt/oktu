@@ -70,6 +70,7 @@ pub Pattern: Pattern = {
   <Literal> => Pattern::Literal { literal: <> },
   <VariantStr> => Pattern::Variant { variant: String::from(<>) },
   <Ident> => Pattern::Variable { name: String::from(<>) },
+  "(" <Comma<Ident>> ")" => Pattern::Tuple { binds: <>.into_iter().map(String::from).collect() },
 }
 
 Arm: Arm = <left:Pattern> "=>" <right:Expression> => Arm { left, right };
@@ -133,7 +134,13 @@ Application: Expression = {
 
 pub SubExpression: Expression = {
   <Primary>,
-  "(" <Expression> ")",
+  "(" <elements:Comma<Expression>> ")" => {
+    if elements.len() == 1 {
+      elements[0].clone()
+    } else {
+      Expression::Tuple { elements }
+    }
+  },
 };
 
 pub Primary: Expression = {

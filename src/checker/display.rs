@@ -19,6 +19,7 @@ impl fmt::Display for TypeKind {
         }
       }
       TypeKind::Enum { name } => write!(f, "{name}"),
+      TypeKind::Tuple { elements } => write!(f, "({elements:?})"),
       TypeKind::Number => write!(f, "number"),
       TypeKind::String => write!(f, "string"),
       TypeKind::Boolean => write!(f, "bool"),

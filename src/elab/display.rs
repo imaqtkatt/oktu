@@ -17,14 +17,14 @@ impl fmt::Display for Operation {
     match self {
       Operation::Add => write!(f, "+"),
       Operation::Sub => write!(f, "-"),
-      Operation::Mul => todo!(),
-      Operation::Div => todo!(),
+      Operation::Mul => write!(f, "*"),
+      Operation::Div => write!(f, "/"),
       Operation::Gt => write!(f, ">"),
-      Operation::Gte => todo!(),
-      Operation::Lt => todo!(),
-      Operation::Lte => todo!(),
-      Operation::Eq => todo!(),
-      Operation::Neq => todo!(),
+      Operation::Gte => write!(f, ">="),
+      Operation::Lt => write!(f, "<"),
+      Operation::Lte => write!(f, "<="),
+      Operation::Eq => write!(f, "="),
+      Operation::Neq => write!(f, "!="),
       Operation::Concat => write!(f, "++"),
     }
   }
@@ -36,8 +36,9 @@ impl fmt::Display for Pattern {
       Pattern::Error { message } => write!(f, "<Error: \"{message}\">"),
       Pattern::Wildcard => write!(f, "_"),
       Pattern::Variable { name } => write!(f, "{name}"),
-      Pattern::Variant { variant: name } => write!(f, ".{name}"),
+      Pattern::Variant { variant } => write!(f, ".{variant}"),
       Pattern::Literal { literal } => write!(f, "{literal}"),
+      Pattern::Tuple { binds } => write!(f, "{binds:?}"),
     }
   }
 }
@@ -71,6 +72,7 @@ impl fmt::Display for Expression {
       }
       Expression::BinaryOp { op, lhs, rhs } => write!(f, "({lhs} {op} {rhs})"),
       Expression::Variant { variant } => write!(f, ".{variant}"),
+      Expression::Tuple { elements } => write!(f, "({elements:?})"),
     }
   }
 }

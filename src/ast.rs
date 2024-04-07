@@ -30,6 +30,8 @@ pub enum Expression {
   BinaryOp { op: Operation, lhs: Box<Expression>, rhs: Box<Expression> },
   /// .variant
   Variant { variant: String },
+  /// (...,)
+  Tuple { elements: Vec<Expression> },
 }
 
 #[derive(Clone, Debug)]
@@ -58,6 +60,7 @@ pub enum Pattern {
   Variable { name: String },
   Variant { variant: String },
   Literal { literal: Literal },
+  Tuple { binds: Vec<String> },
 }
 
 pub type Parameters = Vec<String>;

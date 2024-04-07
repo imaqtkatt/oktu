@@ -7,6 +7,7 @@ pub enum TypeKind {
   Hole { hole: Hole },
   Arrow { t1: Rc<TypeKind>, t2: Rc<TypeKind> },
   Enum { name: String },
+  Tuple { elements: Vec<Type> },
   Number,
   String,
   Boolean,
@@ -71,6 +72,9 @@ impl TypeKind {
         Type::new(TypeKind::Arrow { t1, t2 })
       }
       TypeKind::Enum { .. } => self.clone(),
+      TypeKind::Tuple { elements } => Type::new(TypeKind::Tuple {
+        elements: elements.iter().map(|e| e.clone().instantiate(substitutions)).collect::<Vec<_>>(),
+      }),
       TypeKind::Number => self.clone(),
       TypeKind::String => self.clone(),
       TypeKind::Boolean => self.clone(),

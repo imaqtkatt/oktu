@@ -147,6 +147,10 @@ impl Infer for Expression {
           Type::new(TypeKind::Error),
         ),
       },
+      Expression::Tuple { elements } => {
+        let (a, b) = elements.into_iter().map(|e| e.infer(env.clone())).unzip();
+        (elab::Expression::Tuple { elements: a }, Type::new(TypeKind::Tuple { elements: b }))
+      }
     }
   }
 }

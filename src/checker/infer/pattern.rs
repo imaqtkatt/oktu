@@ -23,19 +23,32 @@ impl Infer for Pattern {
           ((map, elab::Pattern::Variable { name }), hole)
         }
       }
-      Pattern::Variant { variant: name } => match env.variant_to_enum.get(&name) {
+      Pattern::Variant { variant } => match env.variant_to_enum.get(&variant) {
         Some(enum_name) => (
-          (map, elab::Pattern::Variant { variant: name }),
+          (map, elab::Pattern::Variant { variant }),
           Type::new(TypeKind::Enum { name: enum_name.clone() }),
         ),
         None => (
-          (map, elab::Pattern::error(format!("Unknown variant '{name}'."))),
+          (map, elab::Pattern::error(format!("Unknown variant '{variant}'."))),
           Type::new(TypeKind::Error),
         ),
       },
       Pattern::Literal { literal } => {
         let (elab_literal, literal_type) = literal.infer(env);
         ((map, elab::Pattern::Literal { literal: elab_literal }), literal_type)
+      }
+      Pattern::Tuple { binds } => {
+        let mut elab_binds = Vec::new();
+        let mut elements = Vec::new();
+
+        for bind in binds.iter() {
+          let hole = env.new_hole();
+          elab_binds.push(bind.clone());
+          map.insert(bind.clone(), hole.clone());
+          elements.push(hole);
+        }
+
+        ((map, elab::Pattern::Tuple { binds: elab_binds }), Type::new(TypeKind::Tuple { elements }))
       }
     }
   }
