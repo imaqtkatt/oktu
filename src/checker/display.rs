@@ -1,6 +1,6 @@
 use core::fmt;
 
-use super::{HoleKind, TypeKind};
+use super::{Hole, HoleKind, TypeKind};
 
 impl fmt::Display for TypeKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -10,10 +10,7 @@ impl fmt::Display for TypeKind {
         let c = std::char::from_u32(*id as u32 + 97).unwrap_or('?');
         write!(f, "{c}")
       }
-      TypeKind::Hole { hole } => match hole.get() {
-        HoleKind::Bound { t } => write!(f, "{t}"),
-        HoleKind::Unbound { name, level } => write!(f, "^{name}_{level}"),
-      },
+      TypeKind::Hole { hole } => write!(f, "{hole}"),
       TypeKind::Arrow { t1, t2 } => {
         if t1.need_parens() {
           write!(f, "({t1}) -> {t2}")
@@ -26,6 +23,15 @@ impl fmt::Display for TypeKind {
       TypeKind::String => write!(f, "string"),
       TypeKind::Boolean => write!(f, "bool"),
       TypeKind::Error => write!(f, "<Error>"),
+    }
+  }
+}
+
+impl fmt::Display for Hole {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self.get() {
+      HoleKind::Bound { t } => write!(f, "{t}"),
+      HoleKind::Unbound { name, level } => write!(f, "^{name}_{level}"),
     }
   }
 }

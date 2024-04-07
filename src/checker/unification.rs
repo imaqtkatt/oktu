@@ -1,6 +1,10 @@
-use crate::checker::TypeKind;
+use crate::{checker::TypeKind, report::Diagnostic};
 
-use super::{Hole, HoleKind, Type};
+use super::{Env, Hole, HoleKind, Type};
+
+pub struct UnifyError(Type, Type);
+
+pub struct OccursCheck(Hole, Type);
 
 fn occurs(hole: Hole, t: Type) -> bool {
   match &*t {
@@ -16,42 +20,72 @@ fn occurs(hole: Hole, t: Type) -> bool {
   }
 }
 
-// TODO: not panic
-pub fn unify(t1: Type, t2: Type) -> bool {
+pub fn unify(env: &Env, t1: Type, t2: Type) -> bool {
   use TypeKind::*;
   match (&*t1, &*t2) {
     (Variable { name: x }, Variable { name: y }) => x == y,
     (Generalized { id: x }, Generalized { id: y }) => x == y,
-    (Hole { hole }, _) => unify_hole(hole.clone(), t2.clone(), false),
-    (_, Hole { hole }) => unify_hole(hole.clone(), t1.clone(), true),
+    (Hole { hole }, _) => unify_hole(env, hole.clone(), t2.clone(), false),
+    (_, Hole { hole }) => unify_hole(env, hole.clone(), t1.clone(), true),
     (Arrow { t1: a, t2: b }, Arrow { t1: c, t2: d }) => {
-      unify(a.clone(), c.clone()) && unify(b.clone(), d.clone())
+      unify(env, a.clone(), c.clone()) && unify(env, b.clone(), d.clone())
     }
     (Enum { name: x }, Enum { name: y }) => x == y,
     (Number, Number) => true,
     (String, String) => true,
     (Boolean, Boolean) => true,
-    x => panic!("{x:?}"),
+    (_, _) => {
+      env.reporter.report(UnifyError(t1, t2));
+      false
+    }
   }
 }
 
-// TODO: not panic
-fn unify_hole(hole: Hole, t: Type, swap: bool) -> bool {
+fn unify_hole(env: &Env, hole: Hole, t: Type, swap: bool) -> bool {
   match hole.get() {
     HoleKind::Bound { t: hole_type } => {
       if swap {
-        unify(t, hole_type)
+        unify(env, t, hole_type)
       } else {
-        unify(hole_type, t)
+        unify(env, hole_type, t)
       }
     }
     HoleKind::Unbound { .. } => {
       if occurs(hole.clone(), t.clone()) {
-        panic!("occurs between {hole:?} and {t}")
+        println!("occurs between {hole:?} and {t}");
+        false
       } else {
         hole.fill(t);
         true
       }
     }
+  }
+}
+
+impl Diagnostic for UnifyError {
+  fn message(&self) -> String {
+    format!("Type mismatch between {} and {}.", self.0, self.1)
+  }
+
+  fn severity(&self) -> crate::report::Severity {
+    crate::report::Severity::Error
+  }
+
+  fn extra(&self) -> Vec<String> {
+    vec![]
+  }
+}
+
+impl Diagnostic for OccursCheck {
+  fn message(&self) -> String {
+    format!("Occurs check between {} and {}", self.0, self.1)
+  }
+
+  fn severity(&self) -> crate::report::Severity {
+    crate::report::Severity::Error
+  }
+
+  fn extra(&self) -> Vec<String> {
+    vec![]
   }
 }

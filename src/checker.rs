@@ -5,11 +5,11 @@ pub mod unification;
 
 use std::collections::HashMap;
 
-use crate::{ast::Program, elab};
+use crate::{ast::Program, elab, report::Reporter};
 
 use self::{infer::Infer, types::*};
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone)]
 pub struct Env {
   pub variables: HashMap<String, Scheme>,
   pub type_variables: HashMap<String, Type>,
@@ -18,9 +18,23 @@ pub struct Env {
   pub variant_to_enum: HashMap<String, String>,
   pub level: usize,
   pub counter: usize,
+  pub reporter: Reporter,
 }
 
 impl Env {
+  pub fn new(reporter: Reporter) -> Self {
+    Self {
+      variables: HashMap::new(),
+      type_variables: HashMap::new(),
+      let_decls: HashMap::new(),
+      enum_decls: HashMap::new(),
+      variant_to_enum: HashMap::new(),
+      level: 0,
+      counter: 0,
+      reporter,
+    }
+  }
+
   pub fn instantiate(&mut self, scheme: Scheme) -> Type {
     let substitutions = scheme.binds.iter().map(|_| self.new_hole()).collect::<Vec<_>>();
 

@@ -41,7 +41,7 @@ impl Infer for Expression {
 
         let arrow_type = Type::new(TypeKind::Arrow { t1: argument_type, t2: hole.clone() });
 
-        unify(function_type, arrow_type.clone());
+        unify(&env, function_type, arrow_type.clone());
         (
           elab::Expression::Application {
             function: Box::new(elab_function),
@@ -72,15 +72,15 @@ impl Infer for Expression {
       }
       Expression::If { condition, then, otherwise } => {
         let (elab_condition, condition_type) = condition.infer(env.clone());
-        unify(condition_type, TypeKind::boolean());
+        unify(&env, condition_type, TypeKind::boolean());
 
         let return_type = env.new_hole();
 
         let (elab_then, then_type) = then.infer(env.clone());
-        unify(return_type.clone(), then_type);
+        unify(&env, return_type.clone(), then_type);
 
         let (elab_otherwise, otherwise_type) = otherwise.infer(env.clone());
-        unify(return_type.clone(), otherwise_type);
+        unify(&env, return_type.clone(), otherwise_type);
 
         (
           elab::Expression::If {
@@ -105,8 +105,8 @@ impl Infer for Expression {
 
           let (elab_right, right_type) = right.infer(env.clone());
 
-          unify(left_type, scrutinee_type.clone());
-          unify(return_type.clone(), right_type);
+          unify(&env, left_type, scrutinee_type.clone());
+          unify(&env, return_type.clone(), right_type);
 
           elab_arms.push(elab::Arm { left: elab_left, right: elab_right })
         }
@@ -128,7 +128,7 @@ impl Infer for Expression {
           t2: Type::new(TypeKind::Arrow { t1: rhs_type, t2: ret_type.clone() }),
         });
 
-        unify(to_unify.clone(), op_type);
+        unify(&env, to_unify.clone(), op_type);
         (
           elab::Expression::BinaryOp {
             op: elab_op,
