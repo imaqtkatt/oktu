@@ -4,9 +4,14 @@ use crate::{
   ast::Pattern,
   checker::{Env, Type, TypeKind},
   elab,
+  report::Diagnostic,
 };
 
 use super::Infer;
+
+enum PatternInferError {
+  UnknownVariant(String),
+}
 
 impl Infer for Pattern {
   type Out = (HashMap<String, Type>, elab::Pattern);
@@ -28,10 +33,13 @@ impl Infer for Pattern {
           (map, elab::Pattern::Variant { variant }),
           Type::new(TypeKind::Enum { name: enum_name.clone() }),
         ),
-        None => (
-          (map, elab::Pattern::error(format!("Unknown variant '{variant}'."))),
-          Type::new(TypeKind::Error),
-        ),
+        None => {
+          env.reporter.report(PatternInferError::UnknownVariant(variant.clone()));
+          (
+            (map, elab::Pattern::error(format!("Unknown variant '{variant}'."))),
+            Type::new(TypeKind::Error),
+          )
+        }
       },
       Pattern::Literal { literal } => {
         let (elab_literal, literal_type) = literal.infer(env);
@@ -51,5 +59,21 @@ impl Infer for Pattern {
         ((map, elab::Pattern::Tuple { binds: elab_binds }), Type::new(TypeKind::Tuple { elements }))
       }
     }
+  }
+}
+
+impl Diagnostic for PatternInferError {
+  fn message(&self) -> String {
+    match self {
+      PatternInferError::UnknownVariant(variant) => format!("Unknown variant '{variant}'."),
+    }
+  }
+
+  fn severity(&self) -> crate::report::Severity {
+    crate::report::Severity::Error
+  }
+
+  fn extra(&self) -> Vec<String> {
+    vec![]
   }
 }

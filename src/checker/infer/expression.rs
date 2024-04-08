@@ -2,9 +2,15 @@ use crate::{
   ast::{self, Expression},
   checker::{unification::unify, Env, Scheme, Type, TypeKind},
   elab,
+  report::Diagnostic,
 };
 
 use super::Infer;
+
+enum ExpressionInferError {
+  UnboundVariable(String),
+  UnknownVariant(String),
+}
 
 impl Infer for Expression {
   type Out = elab::Expression;
@@ -16,10 +22,13 @@ impl Infer for Expression {
       }
       Expression::Variable { name } => match env.fetch(&name) {
         Some(scheme) => (elab::Expression::Variable { name }, env.instantiate(scheme.clone())),
-        None => (
-          elab::Expression::error(format!("Unbound variable '{name}'.")),
-          Type::new(TypeKind::Error),
-        ),
+        None => {
+          env.reporter.report(ExpressionInferError::UnboundVariable(name.clone()));
+          (
+            elab::Expression::error(format!("Unbound variable '{name}'.")),
+            Type::new(TypeKind::Error),
+          )
+        }
       },
       Expression::Fun { variable, body } => {
         let hole = env.new_hole();
@@ -142,15 +151,35 @@ impl Infer for Expression {
         Some(name) => {
           (elab::Expression::Variant { variant }, Type::new(TypeKind::Enum { name: name.clone() }))
         }
-        None => (
-          elab::Expression::error(format!("Unknown variant '{variant}'.")),
-          Type::new(TypeKind::Error),
-        ),
+        None => {
+          env.reporter.report(ExpressionInferError::UnknownVariant(variant.clone()));
+          (
+            elab::Expression::error(format!("Unknown variant '{variant}'.")),
+            Type::new(TypeKind::Error),
+          )
+        }
       },
       Expression::Tuple { elements } => {
         let (a, b) = elements.into_iter().map(|e| e.infer(env.clone())).unzip();
         (elab::Expression::Tuple { elements: a }, Type::new(TypeKind::Tuple { elements: b }))
       }
     }
+  }
+}
+
+impl Diagnostic for ExpressionInferError {
+  fn message(&self) -> String {
+    match self {
+      ExpressionInferError::UnboundVariable(name) => format!("Unbound variable '{name}'."),
+      ExpressionInferError::UnknownVariant(variant) => format!("Unknown variant '{variant}'."),
+    }
+  }
+
+  fn severity(&self) -> crate::report::Severity {
+    crate::report::Severity::Error
+  }
+
+  fn extra(&self) -> Vec<String> {
+    vec![]
   }
 }

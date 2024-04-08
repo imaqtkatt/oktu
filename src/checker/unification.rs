@@ -41,8 +41,7 @@ pub fn unify(env: &Env, t1: Type, t2: Type) -> bool {
     (String, String) => true,
     (Boolean, Boolean) => true,
 
-    (Tuple { elements: x }, Tuple { elements: y }) if x.len() != y.len() => false,
-    (Tuple { elements: x }, Tuple { elements: y }) => {
+    (Tuple { elements: x }, Tuple { elements: y }) if x.len() == y.len() => {
       x.iter().zip(y.iter()).all(|(a, b)| unify(env, a.clone(), b.clone()))
     }
 
