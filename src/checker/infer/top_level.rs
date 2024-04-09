@@ -1,4 +1,5 @@
 use crate::{
+  arr,
   ast::{Enum, Function, TopLevel},
   checker::{Env, Scheme, Type, TypeKind},
   elab,
@@ -30,9 +31,8 @@ impl Infer for TopLevel {
         let (elab_body, body_type) = body.infer(new_env.clone());
         new_env.leave_level();
 
-        let function_type = parameter_types
-          .into_iter()
-          .rfold(body_type, |acc, param| Type::new(TypeKind::Arrow { t1: param, t2: acc }));
+        let function_type =
+          parameter_types.into_iter().rfold(body_type, |acc, param| arr!(param => acc).into());
 
         env.let_decls.insert(function_name.clone(), new_env.generalize(function_type.clone()));
 

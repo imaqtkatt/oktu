@@ -14,6 +14,13 @@ pub enum TypeKind {
   Error,
 }
 
+#[macro_export]
+macro_rules! arr {
+  ($t1:expr => $t2:expr) => {
+    TypeKind::Arrow { t1: $t1.into(), t2: $t2.into() }
+  };
+}
+
 pub type Type = Rc<TypeKind>;
 
 #[derive(Debug, Clone)]
@@ -95,24 +102,15 @@ impl TypeKind {
   }
 
   pub fn num_num() -> Type {
-    Type::new(TypeKind::Arrow {
-      t1: TypeKind::number(),
-      t2: Type::new(TypeKind::Arrow { t1: TypeKind::number(), t2: TypeKind::number() }),
-    })
+    arr!(TypeKind::Number => arr!(TypeKind::Number => TypeKind::Number)).into()
   }
 
   pub fn num_logical() -> Type {
-    Type::new(TypeKind::Arrow {
-      t1: TypeKind::number(),
-      t2: Type::new(TypeKind::Arrow { t1: TypeKind::number(), t2: TypeKind::boolean() }),
-    })
+    arr!(TypeKind::Number => arr!(TypeKind::Number => TypeKind::Boolean)).into()
   }
 
   pub fn str_str() -> Type {
-    Type::new(TypeKind::Arrow {
-      t1: TypeKind::string(),
-      t2: Type::new(TypeKind::Arrow { t1: TypeKind::string(), t2: TypeKind::string() }),
-    })
+    arr!(TypeKind::String => arr!(TypeKind::String => TypeKind::String)).into()
   }
 }
 

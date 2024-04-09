@@ -1,4 +1,5 @@
 use crate::{
+  arr,
   ast::{self, Expression},
   checker::{unification::unify, Env, Scheme, Type, TypeKind},
   elab,
@@ -38,7 +39,7 @@ impl Infer for Expression {
         new_env.variables.insert(variable.clone(), scheme);
 
         let (elab_body, body_type) = body.infer(new_env);
-        let arrow = Type::new(TypeKind::Arrow { t1: hole, t2: body_type });
+        let arrow = Type::new(arr!(hole => body_type));
 
         (elab::Expression::Fun { variable, body: Box::new(elab_body) }, arrow)
       }
@@ -48,7 +49,7 @@ impl Infer for Expression {
 
         let hole = env.new_hole();
 
-        let arrow_type = Type::new(TypeKind::Arrow { t1: argument_type, t2: hole.clone() });
+        let arrow_type: Type = arr!(argument_type => hole.clone()).into();
 
         unify(&env, function_type, arrow_type.clone());
         (
@@ -132,12 +133,9 @@ impl Infer for Expression {
         let (elab_rhs, rhs_type) = rhs.infer(env.clone());
 
         let ret_type = env.new_hole();
-        let to_unify = Type::new(TypeKind::Arrow {
-          t1: lhs_type,
-          t2: Type::new(TypeKind::Arrow { t1: rhs_type, t2: ret_type.clone() }),
-        });
+        let to_unify: Type = arr!(lhs_type => arr!(rhs_type => ret_type.clone())).into();
 
-        unify(&env, to_unify.clone(), op_type);
+        unify(&env, to_unify, op_type);
         (
           elab::Expression::BinaryOp {
             op: elab_op,
@@ -160,8 +158,12 @@ impl Infer for Expression {
         }
       },
       Expression::Tuple { elements } => {
-        let (a, b) = elements.into_iter().map(|e| e.infer(env.clone())).unzip();
-        (elab::Expression::Tuple { elements: a }, Type::new(TypeKind::Tuple { elements: b }))
+        let (elab_elements, elements_type) =
+          elements.into_iter().map(|e| e.infer(env.clone())).unzip();
+        (
+          elab::Expression::Tuple { elements: elab_elements },
+          Type::new(TypeKind::Tuple { elements: elements_type }),
+        )
       }
     }
   }
