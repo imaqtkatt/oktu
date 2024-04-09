@@ -24,4 +24,5 @@ let main _ :=
       (x, y) => x + y
     end
   in
-  first "hello"
+  let res = print_string "a" 0 in
+  exit 0

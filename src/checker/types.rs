@@ -112,6 +112,16 @@ impl TypeKind {
   pub fn str_str() -> Type {
     arr!(TypeKind::String => arr!(TypeKind::String => TypeKind::String)).into()
   }
+
+  /// string -> 'a -> 'a
+  pub fn print_string() -> Type {
+    arr!(TypeKind::String => arr!(TypeKind::Generalized { id: 0 } => TypeKind::Generalized { id: 0 })).into()
+  }
+
+  /// number -> 'a
+  pub fn exit() -> Type {
+    arr!(TypeKind::Number => TypeKind::Generalized { id: 0 }).into()
+  }
 }
 
 impl Scheme {

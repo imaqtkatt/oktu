@@ -17,7 +17,7 @@ impl Infer for TopLevel {
         let mut new_env = env.clone();
         if rec {
           let rec_hole = new_env.new_hole();
-          new_env.variables.insert(function_name.clone(), Scheme::new(vec![], rec_hole));
+          new_env.let_decls.insert(function_name.clone(), Scheme::new(vec![], rec_hole));
         }
         let mut parameter_types = Vec::new();
 

@@ -8,7 +8,7 @@ impl fmt::Display for TypeKind {
       TypeKind::Variable { name } => write!(f, "{name}"),
       TypeKind::Generalized { id } => {
         let c = std::char::from_u32(*id as u32 + 97).unwrap_or('?');
-        write!(f, "{c}")
+        write!(f, "'{c}")
       }
       TypeKind::Hole { hole } => write!(f, "{hole}"),
       TypeKind::Arrow { t1, t2 } => {
