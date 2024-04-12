@@ -112,7 +112,7 @@ Infix: Expression = {
 
   #[precedence(level="1")] #[assoc(side="left")]
   <lhs:Infix> "/" <rhs:Infix> =>
-    Expression::BinaryOp { op: Operation::Mul, lhs: Box::new(lhs), rhs: Box::new(rhs) },
+    Expression::BinaryOp { op: Operation::Div, lhs: Box::new(lhs), rhs: Box::new(rhs) },
 
   #[precedence(level="2")] #[assoc(side="left")]
   <lhs:Infix> "-" <rhs:Infix> =>
@@ -120,11 +120,35 @@ Infix: Expression = {
 
   #[precedence(level="2")] #[assoc(side="left")]
   <lhs:Infix> "+" <rhs:Infix> =>
-    Expression::BinaryOp { op: Operation::Sub, lhs: Box::new(lhs), rhs: Box::new(rhs) },
+    Expression::BinaryOp { op: Operation::Add, lhs: Box::new(lhs), rhs: Box::new(rhs) },
 
   #[precedence(level="3")] #[assoc(side="left")]
   <lhs:Infix> ">" <rhs:Infix> =>
     Expression::BinaryOp { op: Operation::Gt, lhs: Box::new(lhs), rhs: Box::new(rhs) },
+
+  #[precedence(level="3")] #[assoc(side="left")]
+  <lhs:Infix> ">=" <rhs:Infix> =>
+    Expression::BinaryOp { op: Operation::Gte, lhs: Box::new(lhs), rhs: Box::new(rhs) },
+
+  #[precedence(level="4")] #[assoc(side="left")]
+  <lhs:Infix> "<" <rhs:Infix> =>
+    Expression::BinaryOp { op: Operation::Lt, lhs: Box::new(lhs), rhs: Box::new(rhs) },
+
+  #[precedence(level="4")] #[assoc(side="left")]
+  <lhs:Infix> "<=" <rhs:Infix> =>
+    Expression::BinaryOp { op: Operation::Lte, lhs: Box::new(lhs), rhs: Box::new(rhs) },
+
+  #[precedence(level="5")] #[assoc(side="left")]
+  <lhs:Infix> "=" <rhs:Infix> =>
+    Expression::BinaryOp { op: Operation::Eq, lhs: Box::new(lhs), rhs: Box::new(rhs) },
+
+  #[precedence(level="5")] #[assoc(side="left")]
+  <lhs:Infix> "<>" <rhs:Infix> =>
+    Expression::BinaryOp { op: Operation::Neq, lhs: Box::new(lhs), rhs: Box::new(rhs) },
+
+  #[precedence(level="6")] #[assoc(side="left")]
+  <lhs:Infix> "++" <rhs:Infix> =>
+    Expression::BinaryOp { op: Operation::Concat, lhs: Box::new(lhs), rhs: Box::new(rhs) },
 }
 
 Application: Expression = {
