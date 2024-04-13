@@ -96,4 +96,8 @@ impl Program {
   pub fn empty() -> Self {
     Self { file_name: None, declarations: Vec::new() }
   }
+
+  pub fn new(declarations: Vec<TopLevel>) -> Self {
+    Self { file_name: None, declarations }
+  }
 }

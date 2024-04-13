@@ -8,24 +8,29 @@ enum bool_enum :=
 
 let bool_negate b :=
   match b with
-    .True => .False,
-    .False => .True,
+  | .True => .False
+  | .False => .True
   end
 
 let rec up_to_zero n :=
-  if n > 0
-  then up_to_zero (n - 1)
-  else true
+  begin
+    if n > 0
+    then up_to_zero (n - 1)
+    else true
+  end
 
 let pair fst snd := fun pair -> pair fst snd
 
 let first x y := x
 
+let not_tup _ := (1)
+let tup _ := (1, 2)
+
 let main _ :=
   let a = (1, 2) in
   let res =
     match a with
-      (x, y) => x + y
+    | (x, y) => x + y
     end
   in
   let res = print_string "a" 0 in

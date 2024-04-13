@@ -1,5 +1,5 @@
 use crate::ast::{
-  Expression, Literal, Operation, Pattern, Arm, Function, Enum, TopLevel, Program, Parameters
+  Expression, Literal, Operation, Pattern, Arm, Function, Enum, TopLevel, Program,
 };
 
 grammar;
@@ -22,13 +22,7 @@ Comma<T>: Vec<T> = {
   }
 };
 
-pub Program: Program = {
-  => Program::empty(),
-  <mut program:Program> <decl:TopLevel> => {
-    program.declarations.push(decl);
-    program
-  }
-};
+pub Program: Program = <declarations:(<TopLevel>)+> => Program::new(declarations);
 
 pub TopLevel: TopLevel = {
   <Enum> => TopLevel::Enum(<>),
@@ -42,30 +36,13 @@ Enum: Enum = "enum" <name:Ident> ":=" <variants:Comma<VariantStr>> =>
     variants: variants.into_iter().map(String::from).collect(),
   };
 
-FunctionParameters: Parameters = {
-  => Vec::new(),
-  <mut params:FunctionParameters> <param:Ident> => {
-    params.push(String::from(param));
-    params
-  }
-}
-
-Function: Function = {
-  "let" "rec" <name:Ident> <parameters:FunctionParameters> ":=" <body:Expression> =>
-    Function {
-      name: String::from(name),
-      rec: true,
-      parameters,
-      body,
-    },
-  "let" <name:Ident> <parameters:FunctionParameters> ":=" <body:Expression> =>
-    Function {
-      name: String::from(name),
-      rec: false,
-      parameters,
-      body,
-    },
-}
+Function: Function = "let" <rec:"rec"?> <name:Ident> <parameters:Ident*> ":=" <body:Expression> =>
+  Function {
+    name: String::from(name),
+    rec: rec.is_some(),
+    parameters: parameters.into_iter().map(String::from).collect(),
+    body,
+  };
 
 pub Pattern: Pattern = {
   <Literal> => Pattern::Literal { literal: <> },
@@ -73,10 +50,6 @@ pub Pattern: Pattern = {
   <Ident> => Pattern::Variable { name: String::from(<>) },
   "(" <Comma<Ident>> ")" => Pattern::Tuple { binds: <>.into_iter().map(String::from).collect() },
 }
-
-Arm: Arm = <left:Pattern> "=>" <right:Expression> => Arm { left, right };
-
-Arms = Comma<Arm>;
 
 pub Expression: Expression = {
   <Infix>,
@@ -94,8 +67,9 @@ Fun: Expression = "fun" <variable:Ident> "->" <body:Expression> =>
 Let: Expression = "let" <bind:Ident> "=" <value:Expression> "in" <next:Expression> =>
   Expression::Let { bind: String::from(bind), value: Box::new(value), next: Box::new(next) };
 
+Arm: Arm = <left:Pattern> "=>" <right:Expression> => Arm { left, right };
 #[inline]
-Match: Expression = "match" <scrutinee:Expression> "with" <arms:Arms> "end" =>
+Match: Expression = "match" <scrutinee:Expression> "with" <arms:("|" <Arm>)+> "end" =>
   Expression::Match { scrutinee: Box::new(scrutinee), arms };
 
 #[inline]
@@ -159,12 +133,14 @@ Application: Expression = {
 
 pub SubExpression: Expression = {
   <Primary>,
-  "(" <elements:Comma<Expression>> ")" => {
-    if elements.len() == 1 {
-      elements[0].clone()
-    } else {
+  "begin" <Expression> "end",
+  "(" <Expression> ")",
+  "(" <mut elements:(<Expression> ",")+> <last:Expression?> ")" => match last {
+    Some(last) => {
+      elements.push(last);
       Expression::Tuple { elements }
-    }
+    },
+    None => Expression::Tuple { elements },
   },
 };
 
