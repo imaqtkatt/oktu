@@ -28,17 +28,25 @@ fn run() -> std::io::Result<()> {
   let mut buf = String::new();
   file.read_to_string(&mut buf)?;
 
+  let mut elab_program = elab::Program::empty();
+
   match program_parser.parse(&buf) {
     Ok(mut program) => {
       program.file_name = path.to_str().map(Box::from);
       let env = Env::new(reporter);
-      let (_, _) = program.infer(env);
-      // println!("{elab_prog}");
+      let (program, _) = program.infer(env);
+      elab_program = program;
     }
     Err(e) => eprintln!("{e}"),
   }
 
   Reporter::to_stdout(recv);
+
+  match elab_program.to_bend() {
+    Ok(book) => println!("{}", book.display_pretty()),
+    Err(_) => todo!(),
+  }
+  // println!("{elab_prog}");
 
   Ok(())
 }

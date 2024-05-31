@@ -1,4 +1,5 @@
 pub mod display;
+pub mod to_bend;
 
 #[derive(Clone, Debug)]
 pub enum Literal {
@@ -100,8 +101,14 @@ pub enum TopLevel {
   Enum(Enum),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Program {
   pub file_name: Option<Box<str>>,
   pub declarations: Vec<TopLevel>,
+}
+
+impl Program {
+  pub fn empty() -> Self {
+    Self::default()
+  }
 }
