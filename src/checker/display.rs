@@ -19,7 +19,13 @@ impl fmt::Display for TypeKind {
         }
       }
       TypeKind::Enum { name } => write!(f, "{name}"),
-      TypeKind::Tuple { elements } => write!(f, "({elements:?})"),
+      TypeKind::Tuple { elements } => {
+        write!(
+          f,
+          "({})",
+          elements.iter().map(|e| e.to_string()).collect::<Vec<String>>().join(", ")
+        )
+      }
       TypeKind::Number => write!(f, "number"),
       TypeKind::String => write!(f, "string"),
       TypeKind::Boolean => write!(f, "bool"),

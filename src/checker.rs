@@ -25,10 +25,8 @@ impl Env {
   pub fn new(reporter: Reporter) -> Self {
     let mut let_decls = HashMap::new();
 
-    let_decls.insert(
-      "print_string".to_string(),
-      Scheme::new(vec!["a".to_string()], TypeKind::print_string()),
-    );
+    let_decls
+      .insert("print".to_string(), Scheme::new(vec!["a".to_string()], TypeKind::print_string()));
     let_decls.insert("exit".to_string(), Scheme::new(vec!["a".to_string()], TypeKind::exit()));
 
     Self {

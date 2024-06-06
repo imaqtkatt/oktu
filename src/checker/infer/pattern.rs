@@ -19,7 +19,7 @@ impl Infer for Pattern {
   fn infer(self, mut env: Env) -> (Self::Out, Type) {
     let mut map = HashMap::new();
     match self {
-      Pattern::Variable { name } => {
+      Pattern::Variable { name, src: _ } => {
         if name.starts_with('_') {
           ((map, elab::Pattern::Wildcard), env.new_hole())
         } else {
@@ -28,7 +28,7 @@ impl Infer for Pattern {
           ((map, elab::Pattern::Variable { name }), hole)
         }
       }
-      Pattern::Variant { variant } => match env.variant_to_enum.get(&variant) {
+      Pattern::Variant { variant, src: _ } => match env.variant_to_enum.get(&variant) {
         Some(enum_name) => (
           (map, elab::Pattern::Variant { variant }),
           Type::new(TypeKind::Enum { name: enum_name.clone() }),
@@ -41,11 +41,11 @@ impl Infer for Pattern {
           )
         }
       },
-      Pattern::Literal { literal } => {
+      Pattern::Literal { literal, src: _ } => {
         let (elab_literal, literal_type) = literal.infer(env);
         ((map, elab::Pattern::Literal { literal: elab_literal }), literal_type)
       }
-      Pattern::Tuple { binds } => {
+      Pattern::Tuple { binds, src: _ } => {
         let mut elab_binds = Vec::new();
         let mut elements = Vec::new();
 
@@ -75,5 +75,9 @@ impl Diagnostic for PatternInferError {
 
   fn extra(&self) -> Vec<String> {
     vec![]
+  }
+
+  fn src(&self) -> Option<crate::ast::Src> {
+    todo!()
   }
 }

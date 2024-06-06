@@ -40,12 +40,13 @@ fn run() -> std::io::Result<()> {
     Err(e) => eprintln!("{e}"),
   }
 
-  Reporter::to_stdout(recv);
+  Reporter::to_stdout(recv, file);
 
   match elab_program.to_bend() {
     Ok(book) => println!("{}", book.display_pretty()),
-    Err(_) => todo!(),
+    Err(_) => {}
   }
+
   // println!("{elab_prog}");
 
   Ok(())

@@ -37,11 +37,11 @@ impl Expression {
         nxt: next.to_bend()?.into(),
       }),
       Expression::If { condition, then, otherwise } => Ok(bend::Term::Swt {
-        bnd: Some(bend::Name::new("%cnd")),
+        bnd: None,
         arg: condition.to_bend()?.into(),
         with_bnd: vec![],
         with_arg: vec![],
-        pred: Some(bend::Name::new("%cnd-1")),
+        pred: None,
         arms: vec![otherwise.to_bend()?, then.to_bend()?],
       }),
       Expression::Match { .. } => todo!(),

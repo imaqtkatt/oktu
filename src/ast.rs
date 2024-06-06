@@ -1,3 +1,14 @@
+use std::ops::Range;
+
+#[derive(Clone, Debug)]
+pub struct Src(pub(crate) Range<usize>);
+
+impl Src {
+  pub fn new(start: usize, end: usize) -> Self {
+    Self(start..end)
+  }
+}
+
 #[derive(Clone, Debug)]
 pub enum Literal {
   Number { value: i32 },
@@ -8,30 +19,48 @@ pub enum Literal {
 #[derive(Clone, Debug)]
 pub enum Expression {
   /// ?name
-  Hole { name: String },
+  Hole { name: String, src: Src },
   /// a..z | _
-  Variable { name: String },
+  Variable { name: String, src: Src },
   /// fun var -> body
-  Fun { variable: String, body: Box<Expression> },
+  Fun { variable: String, body: Box<Expression>, src: Src },
   /// f x
-  Application { function: Box<Expression>, argument: Box<Expression> },
+  Application { function: Box<Expression>, argument: Box<Expression>, src: Src },
   /// num | str | bool
-  Literal { literal: Literal },
+  Literal { literal: Literal, src: Src },
   /// let bind = value in next
-  Let { bind: String, value: Box<Expression>, next: Box<Expression> },
+  Let { bind: String, value: Box<Expression>, next: Box<Expression>, src: Src },
   /// if condition then expr else expr
-  If { condition: Box<Expression>, then: Box<Expression>, otherwise: Box<Expression> },
+  If { condition: Box<Expression>, then: Box<Expression>, otherwise: Box<Expression>, src: Src },
   /// match x with
   ///   pat => body,
   ///   pat => body,
   /// end
-  Match { scrutinee: Box<Expression>, arms: Vec<Arm> },
+  Match { scrutinee: Box<Expression>, arms: Vec<Arm>, src: Src },
   /// lhs op rhs
-  BinaryOp { op: Operation, lhs: Box<Expression>, rhs: Box<Expression> },
+  BinaryOp { op: Operation, lhs: Box<Expression>, rhs: Box<Expression>, src: Src },
   /// .variant
-  Variant { variant: String },
+  Variant { variant: String, src: Src },
   /// (...,)
-  Tuple { elements: Vec<Expression> },
+  Tuple { elements: Vec<Expression>, src: Src },
+}
+
+impl Expression {
+  pub fn src(&self) -> Src {
+    match self {
+      Expression::Hole { src, .. } => src.clone(),
+      Expression::Variable { src, .. } => src.clone(),
+      Expression::Fun { src, .. } => src.clone(),
+      Expression::Application { src, .. } => src.clone(),
+      Expression::Literal { src, .. } => src.clone(),
+      Expression::Let { src, .. } => src.clone(),
+      Expression::If { src, .. } => src.clone(),
+      Expression::Match { src, .. } => src.clone(),
+      Expression::BinaryOp { src, .. } => src.clone(),
+      Expression::Variant { src, .. } => src.clone(),
+      Expression::Tuple { src, .. } => src.clone(),
+    }
+  }
 }
 
 #[derive(Clone, Debug)]
@@ -57,10 +86,21 @@ pub struct Arm {
 
 #[derive(Clone, Debug)]
 pub enum Pattern {
-  Variable { name: String },
-  Variant { variant: String },
-  Literal { literal: Literal },
-  Tuple { binds: Vec<String> },
+  Variable { name: String, src: Src },
+  Variant { variant: String, src: Src },
+  Literal { literal: Literal, src: Src },
+  Tuple { binds: Vec<String>, src: Src },
+}
+
+impl Pattern {
+  pub fn src(&self) -> Src {
+    match self {
+      Pattern::Variable { src, .. } => src.clone(),
+      Pattern::Variant { src, .. } => src.clone(),
+      Pattern::Literal { src, .. } => src.clone(),
+      Pattern::Tuple { src, .. } => src.clone(),
+    }
+  }
 }
 
 pub type Parameters = Vec<String>;

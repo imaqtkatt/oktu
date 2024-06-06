@@ -1,5 +1,10 @@
 use core::fmt;
-use std::sync::mpsc;
+use std::{
+  io::{Read, Seek, SeekFrom},
+  sync::mpsc,
+};
+
+use crate::ast::Src;
 
 #[derive(Clone)]
 pub struct Reporter {
@@ -18,6 +23,8 @@ pub trait Diagnostic {
   fn severity(&self) -> Severity;
 
   fn extra(&self) -> Vec<String>;
+
+  fn src(&self) -> Option<Src>;
 }
 
 impl Reporter {
@@ -31,12 +38,21 @@ impl Reporter {
     self.sender.send(Box::new(diag)).unwrap()
   }
 
-  pub fn to_stdout(recv: mpsc::Receiver<Box<dyn Diagnostic>>) {
+  pub fn to_stdout(recv: mpsc::Receiver<Box<dyn Diagnostic>>, mut file: std::fs::File) {
     const IDENT_SIZE: usize = 2;
     for diagnostic in recv.try_iter() {
-      println!("[{}]: {}", diagnostic.severity(), diagnostic.message());
+      eprintln!("[{}]: {}", diagnostic.severity(), diagnostic.message());
+      if let Some(Src(pos)) = diagnostic.src() {
+        file.seek(SeekFrom::Start(pos.start as u64)).unwrap();
+        let len = pos.end - pos.start;
+        let mut buf = vec![0; len];
+        file.read_exact(&mut buf).unwrap();
+        let buf = String::from_utf8(buf).unwrap();
+        eprintln!("\x1b[31m{:IDENT_SIZE$}{buf}\x1b[0m", "");
+        eprintln!("\x1b[31m{:IDENT_SIZE$}{:^<len$}\x1b[0m", "", "");
+      }
       for extra in diagnostic.extra() {
-        println!("{:IDENT_SIZE$}{}", "", extra);
+        eprintln!("{:IDENT_SIZE$}{}", "", extra);
       }
     }
   }
