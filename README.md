@@ -1,6 +1,6 @@
 # Oktu
 
-Type safe bend programs without typing any types!
+Type safe Bend programs without typing any type!
 
 ## Example
 
