@@ -2,6 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 #[derive(Debug)]
 pub enum TypeKind {
+  Unit,
   Variable { name: String },
   Generalized { id: usize },
   Hole { hole: Hole },
@@ -17,7 +18,10 @@ pub enum TypeKind {
 #[macro_export]
 macro_rules! arr {
   ($t1:expr => $t2:expr) => {
-    TypeKind::Arrow { t1: $t1.into(), t2: $t2.into() }
+    TypeKind::Arrow {
+      t1: $t1.into(),
+      t2: $t2.into(),
+    }
   };
 }
 
@@ -67,6 +71,7 @@ impl Hole {
 impl TypeKind {
   pub fn instantiate(self: Type, substitutions: &[Type]) -> Type {
     match &&*self {
+      TypeKind::Unit { .. } => self.clone(),
       TypeKind::Variable { .. } => self.clone(),
       TypeKind::Generalized { id } => substitutions[*id].clone(),
       TypeKind::Hole { hole } => match hole.get() {
@@ -80,7 +85,10 @@ impl TypeKind {
       }
       TypeKind::Enum { .. } => self.clone(),
       TypeKind::Tuple { elements } => Type::new(TypeKind::Tuple {
-        elements: elements.iter().map(|e| e.clone().instantiate(substitutions)).collect::<Vec<_>>(),
+        elements: elements
+          .iter()
+          .map(|e| e.clone().instantiate(substitutions))
+          .collect::<Vec<_>>(),
       }),
       TypeKind::Number => self.clone(),
       TypeKind::String => self.clone(),
@@ -113,14 +121,9 @@ impl TypeKind {
     arr!(TypeKind::String => arr!(TypeKind::String => TypeKind::String)).into()
   }
 
-  /// string -> 'a -> 'a
+  /// string -> ()
   pub fn print_string() -> Type {
-    arr!(TypeKind::String => arr!(TypeKind::Generalized { id: 0 } => TypeKind::Generalized { id: 0 })).into()
-  }
-
-  /// number -> 'a
-  pub fn exit() -> Type {
-    arr!(TypeKind::Number => TypeKind::Generalized { id: 0 }).into()
+    arr!(TypeKind::String => TypeKind::Unit).into()
   }
 }
 

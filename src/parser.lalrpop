@@ -137,6 +137,7 @@ pub SubExpression: Expression = {
   <Primary>,
   "begin" <Expression> "end",
   "(" <Expression> ")",
+  <s:@L> "(" ")" <e:@R> => Expression::Unit { src: Src::new(s, e) },
   <s:@L> "(" <mut elements:(<Expression> ",")+> <last:Expression?> ")" <e:@R> => match last {
     Some(last) => {
       elements.push(last);

@@ -18,27 +18,56 @@ pub enum Literal {
 
 #[derive(Clone, Debug)]
 pub enum Expression {
+  /// "()"
+  Unit { src: Src },
   /// ?name
   Hole { name: String, src: Src },
   /// a..z | _
   Variable { name: String, src: Src },
   /// fun var -> body
-  Fun { variable: String, body: Box<Expression>, src: Src },
+  Fun {
+    variable: String,
+    body: Box<Expression>,
+    src: Src,
+  },
   /// f x
-  Application { function: Box<Expression>, argument: Box<Expression>, src: Src },
+  Application {
+    function: Box<Expression>,
+    argument: Box<Expression>,
+    src: Src,
+  },
   /// num | str | bool
   Literal { literal: Literal, src: Src },
   /// let bind = value in next
-  Let { bind: String, value: Box<Expression>, next: Box<Expression>, src: Src },
+  Let {
+    bind: String,
+    value: Box<Expression>,
+    next: Box<Expression>,
+    src: Src,
+  },
   /// if condition then expr else expr
-  If { condition: Box<Expression>, then: Box<Expression>, otherwise: Box<Expression>, src: Src },
+  If {
+    condition: Box<Expression>,
+    then: Box<Expression>,
+    otherwise: Box<Expression>,
+    src: Src,
+  },
   /// match x with
   ///   pat => body,
   ///   pat => body,
   /// end
-  Match { scrutinee: Box<Expression>, arms: Vec<Arm>, src: Src },
+  Match {
+    scrutinee: Box<Expression>,
+    arms: Vec<Arm>,
+    src: Src,
+  },
   /// lhs op rhs
-  BinaryOp { op: Operation, lhs: Box<Expression>, rhs: Box<Expression>, src: Src },
+  BinaryOp {
+    op: Operation,
+    lhs: Box<Expression>,
+    rhs: Box<Expression>,
+    src: Src,
+  },
   /// .variant
   Variant { variant: String, src: Src },
   /// (...,)
@@ -48,6 +77,7 @@ pub enum Expression {
 impl Expression {
   pub fn src(&self) -> Src {
     match self {
+      Expression::Unit { src } => src.clone(),
       Expression::Hole { src, .. } => src.clone(),
       Expression::Variable { src, .. } => src.clone(),
       Expression::Fun { src, .. } => src.clone(),
@@ -134,10 +164,16 @@ pub struct Program {
 
 impl Program {
   pub fn empty() -> Self {
-    Self { file_name: None, declarations: Vec::new() }
+    Self {
+      file_name: None,
+      declarations: Vec::new(),
+    }
   }
 
   pub fn new(declarations: Vec<TopLevel>) -> Self {
-    Self { file_name: None, declarations }
+    Self {
+      file_name: None,
+      declarations,
+    }
   }
 }

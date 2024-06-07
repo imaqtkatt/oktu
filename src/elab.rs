@@ -12,27 +12,50 @@ pub enum Literal {
 pub enum Expression {
   /// For type error.
   Error { message: String },
+  /// ()
+  Unit,
   /// ?name
   Hole { name: String },
   /// a..z | _
   Variable { name: String },
   /// fun var -> body
-  Fun { variable: String, body: Box<Expression> },
+  Fun {
+    variable: String,
+    body: Box<Expression>,
+  },
   /// f x
-  Application { function: Box<Expression>, argument: Box<Expression> },
+  Application {
+    function: Box<Expression>,
+    argument: Box<Expression>,
+  },
   /// num | str | bool
   Literal { literal: Literal },
   /// let bind = value in next
-  Let { bind: String, value: Box<Expression>, next: Box<Expression> },
+  Let {
+    bind: String,
+    value: Box<Expression>,
+    next: Box<Expression>,
+  },
   /// if condition then expr else expr
-  If { condition: Box<Expression>, then: Box<Expression>, otherwise: Box<Expression> },
+  If {
+    condition: Box<Expression>,
+    then: Box<Expression>,
+    otherwise: Box<Expression>,
+  },
   /// match x with
   ///   pat => body,
   ///   pat => body,
   /// end
-  Match { scrutinee: Box<Expression>, arms: Vec<Arm> },
+  Match {
+    scrutinee: Box<Expression>,
+    arms: Vec<Arm>,
+  },
   /// lhs op rhs
-  BinaryOp { op: Operation, lhs: Box<Expression>, rhs: Box<Expression> },
+  BinaryOp {
+    op: Operation,
+    lhs: Box<Expression>,
+    rhs: Box<Expression>,
+  },
   /// .variant
   Variant { variant: String },
   /// (...,)

@@ -8,6 +8,7 @@ pub struct OccursCheck(Src);
 
 fn occurs(hole: Hole, t: Type) -> bool {
   match &*t {
+    TypeKind::Unit => false,
     TypeKind::Variable { .. } => false,
     TypeKind::Generalized { .. } => false,
     TypeKind::Hole { hole: this_hole } => this_hole.clone() == hole,
@@ -41,9 +42,10 @@ pub fn unify(env: &Env, t1: Type, t2: Type, src: Src) -> bool {
     (String, String) => true,
     (Boolean, Boolean) => true,
 
-    (Tuple { elements: x }, Tuple { elements: y }) if x.len() == y.len() => {
-      x.iter().zip(y.iter()).all(|(a, b)| unify(env, a.clone(), b.clone(), src.clone()))
-    }
+    (Tuple { elements: x }, Tuple { elements: y }) if x.len() == y.len() => x
+      .iter()
+      .zip(y.iter())
+      .all(|(a, b)| unify(env, a.clone(), b.clone(), src.clone())),
 
     (_, _) => {
       env.reporter.report(UnifyError(t1, t2, src));

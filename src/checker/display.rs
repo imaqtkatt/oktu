@@ -5,6 +5,7 @@ use super::{Hole, HoleKind, TypeKind};
 impl fmt::Display for TypeKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
+      TypeKind::Unit => write!(f, "()"),
       TypeKind::Variable { name } => write!(f, "{name}"),
       TypeKind::Generalized { id } => {
         let c = std::char::from_u32(*id as u32 + 97).unwrap_or('?');
@@ -23,7 +24,11 @@ impl fmt::Display for TypeKind {
         write!(
           f,
           "({})",
-          elements.iter().map(|e| e.to_string()).collect::<Vec<String>>().join(", ")
+          elements
+            .iter()
+            .map(|e| e.to_string())
+            .collect::<Vec<String>>()
+            .join(", ")
         )
       }
       TypeKind::Number => write!(f, "number"),

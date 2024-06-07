@@ -42,12 +42,8 @@ fn run() -> std::io::Result<()> {
 
   Reporter::to_stdout(recv, file);
 
-  match elab_program.to_bend() {
-    Ok(book) => println!("{}", book.display_pretty()),
-    Err(_) => {}
-  }
-
-  // println!("{elab_prog}");
+  let book = elab_program.to_bend().map_err(std::io::Error::other)?;
+  println!("{}", book.display_pretty());
 
   Ok(())
 }

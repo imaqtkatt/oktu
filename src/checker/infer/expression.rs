@@ -18,20 +18,31 @@ impl Infer for Expression {
 
   fn infer(self, mut env: Env) -> (Self::Out, Type) {
     match self {
-      Expression::Hole { name, src: _ } => {
-        (elab::Expression::Hole { name: name.clone() }, env.new_hole_named(name))
-      }
+      Expression::Unit { src: _ } => (elab::Expression::Unit, Type::new(TypeKind::Unit)),
+      Expression::Hole { name, src: _ } => (
+        elab::Expression::Hole { name: name.clone() },
+        env.new_hole_named(name),
+      ),
       Expression::Variable { name, src } => match env.fetch(&name) {
-        Some(scheme) => (elab::Expression::Variable { name }, env.instantiate(scheme.clone())),
+        Some(scheme) => (
+          elab::Expression::Variable { name },
+          env.instantiate(scheme.clone()),
+        ),
         None => {
-          env.reporter.report(ExpressionInferError::UnboundVariable(name.clone(), src));
+          env
+            .reporter
+            .report(ExpressionInferError::UnboundVariable(name.clone(), src));
           (
             elab::Expression::error(format!("Unbound variable '{name}'.")),
             Type::new(TypeKind::Error),
           )
         }
       },
-      Expression::Fun { variable, body, src: _ } => {
+      Expression::Fun {
+        variable,
+        body,
+        src: _,
+      } => {
         let hole = env.new_hole();
         let scheme = Scheme::new(vec![], hole.clone());
 
@@ -41,9 +52,19 @@ impl Infer for Expression {
         let (elab_body, body_type) = body.infer(new_env);
         let arrow = Type::new(arr!(hole => body_type));
 
-        (elab::Expression::Fun { variable, body: Box::new(elab_body) }, arrow)
+        (
+          elab::Expression::Fun {
+            variable,
+            body: Box::new(elab_body),
+          },
+          arrow,
+        )
       }
-      Expression::Application { function, argument, src } => {
+      Expression::Application {
+        function,
+        argument,
+        src,
+      } => {
         let (elab_function, function_type) = function.infer(env.clone());
         let (elab_argument, argument_type) = argument.infer(env.clone());
 
@@ -62,9 +83,19 @@ impl Infer for Expression {
       }
       Expression::Literal { literal, src: _ } => {
         let (elab_literal, literal_type) = literal.infer(env);
-        (elab::Expression::Literal { literal: elab_literal }, literal_type)
+        (
+          elab::Expression::Literal {
+            literal: elab_literal,
+          },
+          literal_type,
+        )
       }
-      Expression::Let { bind, value, next, src: _ } => {
+      Expression::Let {
+        bind,
+        value,
+        next,
+        src: _,
+      } => {
         env.enter_level();
         let (elab_value, value_type) = value.infer(env.clone());
         env.leave_level();
@@ -76,11 +107,20 @@ impl Infer for Expression {
 
         let (elab_next, next_type) = next.infer(new_env);
         (
-          elab::Expression::Let { bind, value: Box::new(elab_value), next: Box::new(elab_next) },
+          elab::Expression::Let {
+            bind,
+            value: Box::new(elab_value),
+            next: Box::new(elab_next),
+          },
           next_type,
         )
       }
-      Expression::If { condition, then, otherwise, src: _ } => {
+      Expression::If {
+        condition,
+        then,
+        otherwise,
+        src: _,
+      } => {
         let condition_src = condition.src();
         let then_src = then.src();
         let otherwise_src = otherwise.src();
@@ -104,7 +144,11 @@ impl Infer for Expression {
           return_type,
         )
       }
-      Expression::Match { scrutinee, arms, src: _ } => {
+      Expression::Match {
+        scrutinee,
+        arms,
+        src: _,
+      } => {
         let return_type = env.new_hole();
 
         let (elab_scrutinee, scrutinee_type) = scrutinee.infer(env.clone());
@@ -123,11 +167,17 @@ impl Infer for Expression {
           unify(&env, scrutinee_type.clone(), left_type, left_src);
           unify(&env, return_type.clone(), right_type, right_src);
 
-          elab_arms.push(elab::Arm { left: elab_left, right: elab_right })
+          elab_arms.push(elab::Arm {
+            left: elab_left,
+            right: elab_right,
+          })
         }
 
         (
-          elab::Expression::Match { scrutinee: Box::new(elab_scrutinee), arms: elab_arms },
+          elab::Expression::Match {
+            scrutinee: Box::new(elab_scrutinee),
+            arms: elab_arms,
+          },
           return_type,
         )
       }
@@ -151,11 +201,14 @@ impl Infer for Expression {
         )
       }
       Expression::Variant { variant, src } => match env.variant_to_enum.get(&variant) {
-        Some(name) => {
-          (elab::Expression::Variant { variant }, Type::new(TypeKind::Enum { name: name.clone() }))
-        }
+        Some(name) => (
+          elab::Expression::Variant { variant },
+          Type::new(TypeKind::Enum { name: name.clone() }),
+        ),
         None => {
-          env.reporter.report(ExpressionInferError::UnknownVariant(variant.clone(), src));
+          env
+            .reporter
+            .report(ExpressionInferError::UnknownVariant(variant.clone(), src));
           (
             elab::Expression::error(format!("Unknown variant '{variant}'.")),
             Type::new(TypeKind::Error),
@@ -166,8 +219,12 @@ impl Infer for Expression {
         let (elab_elements, elements_type) =
           elements.into_iter().map(|e| e.infer(env.clone())).unzip();
         (
-          elab::Expression::Tuple { elements: elab_elements },
-          Type::new(TypeKind::Tuple { elements: elements_type }),
+          elab::Expression::Tuple {
+            elements: elab_elements,
+          },
+          Type::new(TypeKind::Tuple {
+            elements: elements_type,
+          }),
         )
       }
     }

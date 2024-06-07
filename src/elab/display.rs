@@ -53,13 +53,18 @@ impl fmt::Display for Expression {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Expression::Error { message } => write!(f, "<Error: \"{message}\">"),
+      Expression::Unit => write!(f, "()"),
       Expression::Hole { name } => write!(f, "?{name}"),
       Expression::Variable { name } => write!(f, "{name}"),
       Expression::Fun { variable, body } => write!(f, "fun {variable} -> {body}"),
       Expression::Application { function, argument } => write!(f, "({function} {argument})"),
       Expression::Literal { literal } => write!(f, "{literal}"),
       Expression::Let { bind, value, next } => write!(f, "let {bind} = {value} in {next}"),
-      Expression::If { condition, then, otherwise } => {
+      Expression::If {
+        condition,
+        then,
+        otherwise,
+      } => {
         write!(f, "if {condition} then {then} else {otherwise}")
       }
       Expression::Match { scrutinee, arms } => {

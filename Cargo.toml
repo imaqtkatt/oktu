@@ -9,5 +9,5 @@ edition = "2021"
 lalrpop = "0.20.0"
 
 [dependencies]
-bend-lang = "0.2.27"
+bend-lang = "0.2.33"
 lalrpop-util = { version = "0.20.0", features = ["lexer", "unicode"] }

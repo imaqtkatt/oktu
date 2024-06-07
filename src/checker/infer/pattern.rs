@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-  ast::Pattern,
+  ast::{Pattern, Src},
   checker::{Env, Type, TypeKind},
   elab,
   report::Diagnostic,
@@ -10,7 +10,7 @@ use crate::{
 use super::Infer;
 
 enum PatternInferError {
-  UnknownVariant(String),
+  UnknownVariant(String, Src),
 }
 
 impl Infer for Pattern {
@@ -28,22 +28,37 @@ impl Infer for Pattern {
           ((map, elab::Pattern::Variable { name }), hole)
         }
       }
-      Pattern::Variant { variant, src: _ } => match env.variant_to_enum.get(&variant) {
+      Pattern::Variant { variant, src } => match env.variant_to_enum.get(&variant) {
         Some(enum_name) => (
           (map, elab::Pattern::Variant { variant }),
-          Type::new(TypeKind::Enum { name: enum_name.clone() }),
+          Type::new(TypeKind::Enum {
+            name: enum_name.clone(),
+          }),
         ),
         None => {
-          env.reporter.report(PatternInferError::UnknownVariant(variant.clone()));
+          env
+            .reporter
+            .report(PatternInferError::UnknownVariant(variant.clone(), src));
           (
-            (map, elab::Pattern::error(format!("Unknown variant '{variant}'."))),
+            (
+              map,
+              elab::Pattern::error(format!("Unknown variant '{variant}'.")),
+            ),
             Type::new(TypeKind::Error),
           )
         }
       },
       Pattern::Literal { literal, src: _ } => {
         let (elab_literal, literal_type) = literal.infer(env);
-        ((map, elab::Pattern::Literal { literal: elab_literal }), literal_type)
+        (
+          (
+            map,
+            elab::Pattern::Literal {
+              literal: elab_literal,
+            },
+          ),
+          literal_type,
+        )
       }
       Pattern::Tuple { binds, src: _ } => {
         let mut elab_binds = Vec::new();
@@ -56,7 +71,10 @@ impl Infer for Pattern {
           elements.push(hole);
         }
 
-        ((map, elab::Pattern::Tuple { binds: elab_binds }), Type::new(TypeKind::Tuple { elements }))
+        (
+          (map, elab::Pattern::Tuple { binds: elab_binds }),
+          Type::new(TypeKind::Tuple { elements }),
+        )
       }
     }
   }
@@ -65,7 +83,7 @@ impl Infer for Pattern {
 impl Diagnostic for PatternInferError {
   fn message(&self) -> String {
     match self {
-      PatternInferError::UnknownVariant(variant) => format!("Unknown variant '{variant}'."),
+      PatternInferError::UnknownVariant(variant, _) => format!("Unknown variant '{variant}'."),
     }
   }
 
@@ -78,6 +96,7 @@ impl Diagnostic for PatternInferError {
   }
 
   fn src(&self) -> Option<crate::ast::Src> {
-    todo!()
+    let PatternInferError::UnknownVariant(_, src) = &self;
+    Some(src.clone())
   }
 }
