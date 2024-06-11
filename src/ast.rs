@@ -69,13 +69,15 @@ pub enum ExpressionType {
 }
 
 #[derive(Clone, Debug)]
-pub struct Expression {
-  pub data: Box<ExpressionType>,
+pub struct Spanned<T> {
+  pub data: Box<T>,
   pub src: Src,
 }
 
-impl Expression {
-  pub fn new(data: ExpressionType, src: Src) -> Self {
+pub type Expression = Spanned<ExpressionType>;
+
+impl<T> Spanned<T> {
+  pub fn new(data: T, src: Src) -> Self {
     Self {
       data: Box::new(data),
       src,
@@ -109,23 +111,25 @@ pub struct Arm {
 }
 
 #[derive(Clone, Debug)]
-pub enum Pattern {
-  Variable { name: String, src: Src },
-  Variant { variant: String, src: Src },
-  Literal { literal: Literal, src: Src },
-  Tuple { binds: Vec<String>, src: Src },
+pub enum PatternType {
+  Variable { name: String },
+  Variant { variant: String },
+  Literal { literal: Literal },
+  Tuple { binds: Vec<String> },
 }
 
-impl Pattern {
-  pub fn src(&self) -> Src {
-    match self {
-      Pattern::Variable { src, .. } => src.clone(),
-      Pattern::Variant { src, .. } => src.clone(),
-      Pattern::Literal { src, .. } => src.clone(),
-      Pattern::Tuple { src, .. } => src.clone(),
-    }
-  }
-}
+pub type Pattern = Spanned<PatternType>;
+
+// impl Pattern {
+//   pub fn src(&self) -> Src {
+//     match self {
+//       Pattern::Variable { src, .. } => src.clone(),
+//       Pattern::Variant { src, .. } => src.clone(),
+//       Pattern::Literal { src, .. } => src.clone(),
+//       Pattern::Tuple { src, .. } => src.clone(),
+//     }
+//   }
+// }
 
 pub type Parameters = Vec<String>;
 

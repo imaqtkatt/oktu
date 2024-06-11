@@ -1,6 +1,6 @@
 use crate::ast::{
-  Expression, ExpressionType, Literal, Operation, Pattern, Arm, Function, Enum, TopLevel,
-  Program, Src,
+  Expression, ExpressionType, Literal, Operation, PatternType, Pattern, Arm, Function, Enum,
+  TopLevel, Program, Src, Spanned,
 };
 
 grammar;
@@ -45,24 +45,24 @@ Function: Function = "let" <rec:"rec"?> <name:Ident> <parameters:Ident*> ":=" <b
     body,
   };
 
-pub Pattern: Pattern = {
-  <s:@L> <literal:Literal> <e:@R> => Pattern::Literal { literal, src: Src::new(s, e) },
-  <s:@L> <variant:VariantStr> <e:@R> => Pattern::Variant { variant: String::from(variant), src: Src::new(s, e) },
-  <s:@L> <name:Ident> <e:@R> => Pattern::Variable { name: String::from(name), src: Src::new(s, e) },
-  <s:@L> "(" <binds:Comma<Ident>> ")" <e:@R> =>
-    Pattern::Tuple { binds: binds.into_iter().map(String::from).collect(), src: Src::new(s, e) },
-}
+Spanned<T>: Spanned<T> = <s:@L> <data:T> <e:@R> => Spanned::new(data, Src::new(s, e));
 
-SrcExpression<T>: Expression = {
-  <s:@L> <data:T> <e:@R> => Expression::new(data, Src::new(s, e)),
+Pattern: Pattern = <Spanned<Pattern0>>;
+
+Pattern0: PatternType = {
+  <literal:Literal> => PatternType::Literal { literal },
+  <variant:VariantStr> => PatternType::Variant { variant: String::from(variant) },
+  <name:Ident> => PatternType::Variable { name: String::from(name) },
+  "(" <binds:Comma<Ident>> ")" =>
+    PatternType::Tuple { binds: binds.into_iter().map(String::from).collect() },
 }
 
 Expression: Expression = {
   <Infix>,
-  <SrcExpression<Fun>>,
-  <SrcExpression<Let>>,
-  <SrcExpression<If>>,
-  <SrcExpression<Match>>,
+  <Spanned<Fun>>,
+  <Spanned<Let>>,
+  <Spanned<If>>,
+  <Spanned<Match>>,
 };
 
 #[inline]
@@ -88,77 +88,77 @@ Infix: Expression = {
 
   #[precedence(level="1")] #[assoc(side="left")]
   <s:@L> <lhs:Infix> "*" <rhs:Infix> <e:@R> =>
-    Expression::new(
+    Spanned::new(
       ExpressionType::BinaryOp { op: Operation::Mul, lhs: Box::new(lhs), rhs: Box::new(rhs) },
       Src::new(s, e),
     ),
 
   #[precedence(level="1")] #[assoc(side="left")]
   <s:@L> <lhs:Infix> "/" <rhs:Infix> <e:@R> =>
-    Expression::new(
+    Spanned::new(
       ExpressionType::BinaryOp { op: Operation::Div, lhs: Box::new(lhs), rhs: Box::new(rhs) },
       Src::new(s, e),
     ),
 
   #[precedence(level="2")] #[assoc(side="left")]
   <s:@L> <lhs:Infix> "-" <rhs:Infix> <e:@R> =>
-    Expression::new(
+    Spanned::new(
       ExpressionType::BinaryOp { op: Operation::Sub, lhs: Box::new(lhs), rhs: Box::new(rhs) },
       Src::new(s, e),
     ),
 
   #[precedence(level="2")] #[assoc(side="left")]
   <s:@L> <lhs:Infix> "+" <rhs:Infix> <e:@R> =>
-    Expression::new(
+    Spanned::new(
       ExpressionType::BinaryOp { op: Operation::Add, lhs: Box::new(lhs), rhs: Box::new(rhs) },
       Src::new(s, e),
     ),
 
   #[precedence(level="3")] #[assoc(side="left")]
   <s:@L> <lhs:Infix> ">" <rhs:Infix> <e:@R> =>
-    Expression::new(
+    Spanned::new(
       ExpressionType::BinaryOp { op: Operation::Gt, lhs: Box::new(lhs), rhs: Box::new(rhs) },
       Src::new(s, e),
     ),
 
   #[precedence(level="3")] #[assoc(side="left")]
   <s:@L> <lhs:Infix> ">=" <rhs:Infix> <e:@R> =>
-    Expression::new(
+    Spanned::new(
       ExpressionType::BinaryOp { op: Operation::Gte, lhs: Box::new(lhs), rhs: Box::new(rhs) },
       Src::new(s, e),
     ),
 
   #[precedence(level="4")] #[assoc(side="left")]
   <s:@L> <lhs:Infix> "<" <rhs:Infix> <e:@R> =>
-    Expression::new(
+    Spanned::new(
       ExpressionType::BinaryOp { op: Operation::Lt, lhs: Box::new(lhs), rhs: Box::new(rhs) },
       Src::new(s, e),
     ),
 
   #[precedence(level="4")] #[assoc(side="left")]
   <s:@L> <lhs:Infix> "<=" <rhs:Infix> <e:@R> =>
-    Expression::new(
+    Spanned::new(
       ExpressionType::BinaryOp { op: Operation::Lte, lhs: Box::new(lhs), rhs: Box::new(rhs) },
       Src::new(s, e),
     ),
 
   #[precedence(level="5")] #[assoc(side="left")]
   <s:@L> <lhs:Infix> "=" <rhs:Infix> <e:@R> =>
-    Expression::new(
+    Spanned::new(
       ExpressionType::BinaryOp { op: Operation::Eq, lhs: Box::new(lhs), rhs: Box::new(rhs) },
       Src::new(s, e),
     ),
 
   #[precedence(level="5")] #[assoc(side="left")]
   <s:@L> <lhs:Infix> "<>" <rhs:Infix> <e:@R> =>
-    Expression::new(
+    Spanned::new(
       ExpressionType::BinaryOp { op: Operation::Neq, lhs: Box::new(lhs), rhs: Box::new(rhs) },
       Src::new(s, e),
     ),
 
   #[precedence(level="6")] #[assoc(side="left")]
   <s:@L> <lhs:Infix> "++" <rhs:Infix> <e:@R> =>
-    Expression::new(
+    Spanned::new(
       ExpressionType::BinaryOp { op: Operation::Concat, lhs: Box::new(lhs), rhs: Box::new(rhs) },
       Src::new(s, e),
     ),
@@ -166,18 +166,20 @@ Infix: Expression = {
 
 Application: Expression = {
   <SubExpression>,
-  <SrcExpression<Application0>>,
+  <Spanned<Application0>>,
 }
+
 #[inline]
-Application0: ExpressionType =
+Application0: ExpressionType = {
   <function:Application> <argument:SubExpression> =>
-    ExpressionType::Application { function: Box::new(function), argument: Box::new(argument) };
+    ExpressionType::Application { function: Box::new(function), argument: Box::new(argument) },
+};
 
 pub SubExpression: Expression = {
   <Primary>,
   "begin" <Expression> "end",
   "(" <Expression> ")",
-  <SrcExpression<Tup>>,
+  <Spanned<Tup>>,
 };
 
 Tup: ExpressionType =
@@ -190,11 +192,11 @@ Tup: ExpressionType =
   };
 
 pub Primary: Expression = {
-  <SrcExpression<UnitLiteral>>,
-  <SrcExpression<Variant>>,
-  <SrcExpression<Hole>>,
-  <SrcExpression<Variable>>,
-  <SrcExpression<LiteralExpr>>,
+  <Spanned<UnitLiteral>>,
+  <Spanned<Variant>>,
+  <Spanned<Hole>>,
+  <Spanned<Variable>>,
+  <Spanned<LiteralExpr>>,
 };
 
 #[inline]

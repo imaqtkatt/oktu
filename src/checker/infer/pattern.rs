@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-  ast::{Pattern, Src},
+  ast::{Pattern, PatternType, Src},
   checker::{Env, Type, TypeKind},
   elab,
   report::Diagnostic,
@@ -18,8 +18,8 @@ impl Infer for Pattern {
 
   fn infer(self, mut env: Env) -> (Self::Out, Type) {
     let mut map = HashMap::new();
-    match self {
-      Pattern::Variable { name, src: _ } => {
+    match *self.data {
+      PatternType::Variable { name } => {
         if name.starts_with('_') {
           ((map, elab::Pattern::Wildcard), env.new_hole())
         } else {
@@ -28,7 +28,7 @@ impl Infer for Pattern {
           ((map, elab::Pattern::Variable { name }), hole)
         }
       }
-      Pattern::Variant { variant, src } => match env.variant_to_enum.get(&variant) {
+      PatternType::Variant { variant } => match env.variant_to_enum.get(&variant) {
         Some(enum_name) => (
           (map, elab::Pattern::Variant { variant }),
           Type::new(TypeKind::Enum {
@@ -38,7 +38,7 @@ impl Infer for Pattern {
         None => {
           env
             .reporter
-            .report(PatternInferError::UnknownVariant(variant.clone(), src));
+            .report(PatternInferError::UnknownVariant(variant.clone(), self.src));
           (
             (
               map,
@@ -48,7 +48,7 @@ impl Infer for Pattern {
           )
         }
       },
-      Pattern::Literal { literal, src: _ } => {
+      PatternType::Literal { literal } => {
         let (elab_literal, literal_type) = literal.infer(env);
         (
           (
@@ -60,7 +60,7 @@ impl Infer for Pattern {
           literal_type,
         )
       }
-      Pattern::Tuple { binds, src: _ } => {
+      PatternType::Tuple { binds } => {
         let mut elab_binds = Vec::new();
         let mut elements = Vec::new();
 
