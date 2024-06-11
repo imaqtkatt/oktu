@@ -17,40 +17,36 @@ pub enum Literal {
 }
 
 #[derive(Clone, Debug)]
-pub enum Expression {
+pub enum ExpressionType {
   /// "()"
-  Unit { src: Src },
+  Unit,
   /// ?name
-  Hole { name: String, src: Src },
+  Hole { name: String },
   /// a..z | _
-  Variable { name: String, src: Src },
+  Variable { name: String },
   /// fun var -> body
   Fun {
     variable: String,
     body: Box<Expression>,
-    src: Src,
   },
   /// f x
   Application {
     function: Box<Expression>,
     argument: Box<Expression>,
-    src: Src,
   },
   /// num | str | bool
-  Literal { literal: Literal, src: Src },
+  Literal { literal: Literal },
   /// let bind = value in next
   Let {
     bind: String,
     value: Box<Expression>,
     next: Box<Expression>,
-    src: Src,
   },
   /// if condition then expr else expr
   If {
     condition: Box<Expression>,
     then: Box<Expression>,
     otherwise: Box<Expression>,
-    src: Src,
   },
   /// match x with
   ///   pat => body,
@@ -59,37 +55,35 @@ pub enum Expression {
   Match {
     scrutinee: Box<Expression>,
     arms: Vec<Arm>,
-    src: Src,
   },
   /// lhs op rhs
   BinaryOp {
     op: Operation,
     lhs: Box<Expression>,
     rhs: Box<Expression>,
-    src: Src,
   },
   /// .variant
-  Variant { variant: String, src: Src },
+  Variant { variant: String },
   /// (...,)
-  Tuple { elements: Vec<Expression>, src: Src },
+  Tuple { elements: Vec<Expression> },
+}
+
+#[derive(Clone, Debug)]
+pub struct Expression {
+  pub data: Box<ExpressionType>,
+  pub src: Src,
 }
 
 impl Expression {
-  pub fn src(&self) -> Src {
-    match self {
-      Expression::Unit { src } => src.clone(),
-      Expression::Hole { src, .. } => src.clone(),
-      Expression::Variable { src, .. } => src.clone(),
-      Expression::Fun { src, .. } => src.clone(),
-      Expression::Application { src, .. } => src.clone(),
-      Expression::Literal { src, .. } => src.clone(),
-      Expression::Let { src, .. } => src.clone(),
-      Expression::If { src, .. } => src.clone(),
-      Expression::Match { src, .. } => src.clone(),
-      Expression::BinaryOp { src, .. } => src.clone(),
-      Expression::Variant { src, .. } => src.clone(),
-      Expression::Tuple { src, .. } => src.clone(),
+  pub fn new(data: ExpressionType, src: Src) -> Self {
+    Self {
+      data: Box::new(data),
+      src,
     }
+  }
+
+  pub fn src(&self) -> Src {
+    self.src.clone()
   }
 }
 
