@@ -1,5 +1,6 @@
-use std::{io::Read, path::Path};
+use std::{io::Read, path::PathBuf};
 
+use clap::{Parser, Subcommand};
 use lalrpop_util::lalrpop_mod;
 use report::Reporter;
 
@@ -11,6 +12,20 @@ pub mod elab;
 pub mod report;
 lalrpop_mod!(pub parser);
 
+#[derive(Clone, Parser)]
+struct Cli {
+  #[command(subcommand)]
+  pub command: Cmd,
+}
+
+#[derive(Clone, Subcommand)]
+pub enum Cmd {
+  /// Type checks the program.
+  Check { path: PathBuf },
+  /// Compiles the program to Bend.
+  Compile { path: PathBuf },
+}
+
 fn main() {
   if let Err(e) = run() {
     eprintln!("Error: {e}");
@@ -18,32 +33,43 @@ fn main() {
 }
 
 fn run() -> std::io::Result<()> {
-  let argv = std::env::args().collect::<Vec<_>>();
-
-  let program_parser = parser::ProgramParser::new();
+  let cli = Cli::parse();
   let (reporter, recv) = Reporter::new();
 
-  let path = Path::new(&argv[1]);
-  let mut file = std::fs::File::open(path)?;
-  let mut buf = String::new();
-  file.read_to_string(&mut buf)?;
-
-  let mut elab_program = elab::Program::empty();
-
-  match program_parser.parse(&buf) {
-    Ok(mut program) => {
-      program.file_name = path.to_str().map(Box::from);
-      let env = Env::new(reporter);
-      let (program, _) = program.infer(env);
-      elab_program = program;
+  match cli.command {
+    Cmd::Check { path } => {
+      let mut file = std::fs::File::open(&path)?;
+      let input = read_file(&mut file)?;
+      match parser::ProgramParser::new().parse(&input) {
+        Ok(program) => {
+          let env = Env::new(reporter);
+          _ = program.infer(env);
+          Reporter::to_stdout(recv, file);
+        }
+        Err(e) => eprintln!("{e}"),
+      };
     }
-    Err(e) => eprintln!("{e}"),
+    Cmd::Compile { path } => {
+      let mut file = std::fs::File::open(&path)?;
+      let input = read_file(&mut file)?;
+      match parser::ProgramParser::new().parse(&input) {
+        Ok(program) => {
+          let env = Env::new(reporter);
+          let (program, _) = program.infer(env);
+          Reporter::to_stdout(recv, file);
+          let output = program.to_bend().map_err(std::io::Error::other)?;
+          println!("{}", output.display_pretty());
+        }
+        Err(e) => eprintln!("{e}"),
+      };
+    }
   }
 
-  Reporter::to_stdout(recv, file);
-
-  let book = elab_program.to_bend().map_err(std::io::Error::other)?;
-  println!("{}", book.display_pretty());
-
   Ok(())
+}
+
+fn read_file(file: &mut std::fs::File) -> Result<String, std::io::Error> {
+  let mut buf = String::new();
+  file.read_to_string(&mut buf)?;
+  Ok(buf)
 }

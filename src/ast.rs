@@ -120,17 +120,6 @@ pub enum PatternType {
 
 pub type Pattern = Spanned<PatternType>;
 
-// impl Pattern {
-//   pub fn src(&self) -> Src {
-//     match self {
-//       Pattern::Variable { src, .. } => src.clone(),
-//       Pattern::Variant { src, .. } => src.clone(),
-//       Pattern::Literal { src, .. } => src.clone(),
-//       Pattern::Tuple { src, .. } => src.clone(),
-//     }
-//   }
-// }
-
 pub type Parameters = Vec<String>;
 
 #[derive(Clone, Debug)]
@@ -173,5 +162,9 @@ impl Program {
       file_name: None,
       declarations,
     }
+  }
+
+  pub fn set_file_name(&mut self, file_name: Option<Box<str>>) {
+    self.file_name = file_name;
   }
 }
