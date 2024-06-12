@@ -10,4 +10,5 @@ lalrpop = "0.20.0"
 
 [dependencies]
 bend-lang = "0.2.33"
+clap = { version = "4.5.7", features = ["derive"] }
 lalrpop-util = { version = "0.20.0", features = ["lexer", "unicode"] }

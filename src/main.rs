@@ -41,7 +41,8 @@ fn run() -> std::io::Result<()> {
       let mut file = std::fs::File::open(&path)?;
       let input = read_file(&mut file)?;
       match parser::ProgramParser::new().parse(&input) {
-        Ok(program) => {
+        Ok(mut program) => {
+          program.set_file_name(path.to_str().map(Box::from));
           let env = Env::new(reporter);
           _ = program.infer(env);
           Reporter::to_stdout(recv, file);
@@ -53,7 +54,8 @@ fn run() -> std::io::Result<()> {
       let mut file = std::fs::File::open(&path)?;
       let input = read_file(&mut file)?;
       match parser::ProgramParser::new().parse(&input) {
-        Ok(program) => {
+        Ok(mut program) => {
+          program.set_file_name(path.to_str().map(Box::from));
           let env = Env::new(reporter);
           let (program, _) = program.infer(env);
           Reporter::to_stdout(recv, file);
